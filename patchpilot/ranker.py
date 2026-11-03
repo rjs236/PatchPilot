@@ -42,6 +42,8 @@ def rank_findings(
     for f in findings:
         line_risk = risk_map.get(f.line, 0.0)
         f.score = compute_finding_score(f, line_risk)
+        if line_risk > 0:
+            f.extra["ml_risk"] = round(line_risk, 3)
         scored_findings.append(f)
 
     # De-duplicate by (line, category), keeping the highest score

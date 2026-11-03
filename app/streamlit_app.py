@@ -128,6 +128,11 @@ use_llm = st.sidebar.checkbox(
     value=True,
     help="Leverages Gemini via google-genai SDK to provide plain English explanations and automated code fixes.",
 )
+use_ml = st.sidebar.checkbox(
+    "Enable ML Risk Classifier",
+    value=True,
+    help="Leverages trained HistGradientBoosting model (PyCode-Vul) to predict function vulnerability probabilities.",
+)
 
 has_gemini_key = bool(os.environ.get("GEMINI_API_KEY", "").strip())
 if has_gemini_key:
@@ -191,13 +196,14 @@ if run_clicked or ("review_result" in st.session_state and not default_code):
         st.warning("Please enter or upload Python code to analyze.")
     else:
         with st.spinner("Reviewing code across static analysis, ranking, and AI layers..."):
-            result = review(code=code_to_review, filename=filename, use_llm=use_llm)
+            result = review(code=code_to_review, filename=filename, use_llm=use_llm, use_ml=use_ml)
             st.session_state["review_result"] = result
 
 if "review_result" in st.session_state:
     res = st.session_state["review_result"]
     summary = res.get("summary", {})
     findings = res.get("findings", [])
+    high_risk_funcs = res.get("high_risk_functions", [])
 
     st.markdown("---")
     st.subheader("📊 Review Summary")
@@ -230,6 +236,12 @@ if "review_result" in st.session_state:
             unsafe_allow_html=True,
         )
 
+    if high_risk_funcs:
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.warning(f"⚠️ **ML Risk Alert:** {len(high_risk_funcs)} function(s) flagged with high vulnerability risk (probability >= 50%):")
+        for hf in high_risk_funcs:
+            st.markdown(f"- **Function at Line {hf['line']}**: Predicted Risk **{hf['risk'] * 100:.1f}%**")
+
     st.markdown("<br>", unsafe_allow_html=True)
 
     if not findings:
@@ -250,17 +262,25 @@ if "review_result" in st.session_state:
             explanation = f.get("explanation", "")
             suggested_fix = f.get("suggested_fix", "")
             extra = f.get("extra", {})
+            ml_risk = extra.get("ml_risk")
 
+            ml_badge_str = f" [ML Risk: {int(ml_risk * 100)}%]" if ml_risk is not None else ""
             header_text = (
-                f"#{idx} [{sev.upper()}] Line {line}:{end_line} • {rule_id} ({tool}) — {msg[:70]}"
+                f"#{idx} [{sev.upper()}]{ml_badge_str} Line {line}:{end_line} • {rule_id} ({tool}) — {msg[:70]}"
             )
 
             with st.expander(header_text, expanded=(idx <= 3)):
                 col_info1, col_info2 = st.columns([3, 1])
                 with col_info1:
+                    ml_badge_html = (
+                        f'<span style="background-color:#7c3aed;color:white;padding:2px 8px;border-radius:4px;font-size:0.8rem;font-weight:bold;">ML RISK: {ml_risk * 100:.1f}%</span> &nbsp; '
+                        if ml_risk is not None
+                        else ""
+                    )
                     st.markdown(
                         f'<span class="{badge_class}">{sev.upper()}</span> &nbsp; '
                         f'<span class="badge-cat">{cat.upper()}</span> &nbsp; '
+                        f'{ml_badge_html}'
                         f'<code>Tool: {tool}</code> &nbsp; <code>Rule: {rule_id}</code>',
                         unsafe_allow_html=True,
                     )

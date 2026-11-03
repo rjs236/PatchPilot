@@ -54,3 +54,8 @@ htmlcov/
 scratch/
 temp/
 *.tmp
+
+# ML datasets & checkpoints
+ml/data/
+*.parquet
+ml/artifacts/checkpoint-*/

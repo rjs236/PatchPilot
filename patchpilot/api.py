@@ -30,6 +30,7 @@ class ReviewRequest(BaseModel):
     code: str = Field(..., max_length=200000, description="Python source code (max 200,000 characters).")
     filename: str = Field("snippet.py", description="Source file name.")
     use_llm: bool = Field(False, description="Whether to invoke Gemini LLM enrichment.")
+    use_ml: bool = Field(True, description="Whether to invoke ML function risk classifier.")
 
 
 @app.get("/health")
@@ -46,7 +47,7 @@ def run_review(req: ReviewRequest) -> Dict[str, Any]:
             status_code=400,
             detail="Code exceeds the maximum allowed size of 200,000 characters.",
         )
-    return review(code=req.code, filename=req.filename, use_llm=req.use_llm)
+    return review(code=req.code, filename=req.filename, use_llm=req.use_llm, use_ml=req.use_ml)
 
 
 if __name__ == "__main__":
