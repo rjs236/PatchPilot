@@ -92,12 +92,15 @@ Copy `.env.example` to `.env`:
 ```bash
 cp .env.example .env
 ```
-Add your Google Gemini API key:
+Add your Google Gemini API key and optional GitHub token:
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
 GEMINI_MODEL=gemini-2.5-flash
+
+# Optional: GitHub token to increase GitHub API rate limits from 60 req/hr to 5,000 req/hr
+# GITHUB_TOKEN=your_personal_access_token_here
 ```
-*(Note: If no key is set, PatchPilot gracefully falls back to deterministic static analysis with zero runtime errors).*
+*(Notes: If no Gemini key is set, PatchPilot runs offline static & ML analysis without LLM enrichment. If no GitHub token is set, public PR reviews work out-of-the-box within the 60 requests/hour unauthenticated quota. Tokens are never stored, logged, or returned in errors).*
 
 ---
 
@@ -108,12 +111,9 @@ GEMINI_MODEL=gemini-2.5-flash
 streamlit run app/streamlit_app.py
 ```
 Open [http://localhost:8501](http://localhost:8501) in your browser.
-Features:
-- Live code editor with syntax highlighting
-- Python file drag-and-drop uploader (`.py`)
-- Preset sample scenarios: *Vulnerable & Buggy*, *Complex & Deeply Nested*, *Clean Idiomatic Code*
-- Real-time summary metric cards (High, Medium, Low, Total)
-- Expandable cards with severity badges, AI explanations, and suggested code diffs
+The interface features two dedicated workflows:
+- **Tab 1: 📝 Review Code Snippet**: Live code editor with syntax highlighting, `.py` file drag-and-drop uploader, and quick preset scenarios (*Vulnerable & Buggy*, *Complex & Deeply Nested*, *Clean Idiomatic Code*).
+- **Tab 2: 🐙 Review a Pull Request**: Paste any public GitHub PR URL (e.g. `https://github.com/owner/repo/pull/123`), configure LLM and ML toggles, or click **📦 Load Demo PR (Offline)** for an instant demo without network or rate limit concerns. Shows PR metadata, file-grouped findings on added/modified lines, hidden pre-existing counts, and skipped file reasons.
 
 ### Option B: Start FastAPI REST Server
 ```bash
@@ -121,45 +121,54 @@ uvicorn patchpilot.api:app --host 0.0.0.0 --port 8000 --reload
 ```
 Interactive API docs available at: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-#### Example API Request:
+#### 1. Code Snippet Review (`POST /review`)
 ```bash
 curl -X POST "http://localhost:8000/review" \
   -H "Content-Type: application/json" \
   -d '{
     "code": "def run(x=[]):\n    eval(x)\n",
     "filename": "vuln.py",
-    "use_llm": false
+    "use_llm": false,
+    "use_ml": true
   }'
 ```
 
-#### Example API Response:
-```json
-{
-  "filename": "vuln.py",
-  "lines": 2,
-  "summary": {
-    "high": 1,
-    "medium": 1,
-    "low": 0,
-    "total": 2
-  },
-  "findings": [
-    {
-      "tool": "ast",
-      "rule_id": "eval-exec",
-      "category": "security",
-      "severity": "high",
-      "message": "Dynamic code execution via 'eval()' is hazardous and allows arbitrary code execution.",
-      "line": 2,
-      "end_line": 2,
-      "confidence": 0.95,
-      "score": 4.275,
-      "explanation": "eval() evaluates arbitrary strings, enabling arbitrary remote code execution.",
-      "suggested_fix": "# Avoid eval; use ast.literal_eval for safe literal parsing"
-    }
-  ]
-}
+#### 2. Pull Request Review (`POST /review/pr`)
+```bash
+curl -X POST "http://localhost:8000/review/pr" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://github.com/psf/requests/pull/1234",
+    "use_llm": false,
+    "use_ml": true
+  }'
 ```
+
+#### 3. Bundled Offline Demo PR (`GET /review/pr/demo`)
+```bash
+curl -X GET "http://localhost:8000/review/pr/demo"
+```
+
+---
+
+## 🐙 GitHub Pull Request Review & Diff Filtering
+
+PatchPilot brings the review workflow directly to public GitHub pull requests:
+
+### Realistic Code Review Workflow
+- **Unified Diff Parsing**: Analyzes GitHub patch text to identify exactly which lines were added or modified in the PR.
+- **Diff-Aware Filtering**: Only findings that overlap changed lines (`start..end` line range in diff set) are surfaced in the final review. Pre-existing issues in unchanged lines are suppressed and reported as `"N pre-existing issues hidden"`.
+- **Function Risk Alignment**: ML function risk scores are linked only to functions that touch modified lines.
+
+### Safe GitHub Client & Resource Limits
+- **Public GitHub REST API**: Queries PR metadata, paginates changed files, and retrieves head commit raw file contents.
+- **Resource Bounds**: Reviews at most **20 changed Python files** and **2,000 changed lines** per PR. Excess files or lines are safely skipped with a transparent audit list.
+- **File Filters**: Skips removed files, binary or oversized patches without diff text, and non-UTF-8 files.
+- **Rate Limit Resilience**: Unauthenticated requests are limited by GitHub to 60 req/hr. PatchPilot inspects `x-ratelimit-remaining` and `x-ratelimit-reset` headers and displays the exact UTC reset timestamp. Providing an optional `GITHUB_TOKEN` raises this quota to 5,000 req/hr.
+- **Token Privacy**: GitHub tokens are never logged, stored, printed, or exposed in any error message or API response.
+
+### 100% Offline Demo Mode
+A sample PR response is bundled at `patchpilot/data/demo_pr.json` featuring realistic Python vulnerabilities (SQL formatting, `subprocess(shell=True)`, hardcoded secret, bare except, and mutable default). Clicking **Load Demo PR** in Streamlit or calling `GET /review/pr/demo` runs completely offline without any GitHub or Gemini API calls.
 
 ---
 

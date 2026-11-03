@@ -12,5 +12,6 @@ In accordance with hackathon rules and transparency guidelines, this document lo
 
 ## Human Oversight & Code Integrity
 - All AST rules, McCabe complexity calculations, and scoring ranking logic are deterministically implemented and verified with exhaustive automated unit tests.
-- Gemini LLM generation is isolated as an enrichment layer, designed with graceful fallback so failure or lack of an API key never degrades core code review functionality.
+- Gemini LLM generation is isolated as an enrichment layer, designed with graceful fallback so failure or lack of an API key never degrades core code review functionality. Gemini is capped at 5 files per PR to conserve latency and quota.
 - Machine learning risk predictions are estimated risk probabilities ($0.0 \dots 1.0$) that modulate ranking rather than emitting standalone alerts, backed by leak-proof group-aware splits and sanity controls.
+- GitHub Pull Request Review Layer: Employs deterministic unified-diff parsing to isolate added and modified lines, ensuring only relevant diff findings are reported while pre-existing issues are hidden. A 100% offline demo fixture is provided for zero-network validation.
