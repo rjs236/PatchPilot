@@ -165,6 +165,87 @@ st.sidebar.markdown(
     "- Layer 3: Google Gemini LLM Explanations\n"
 )
 
+# Helper finding renderers
+def render_finding_card(idx: int, f: dict, default_expanded: bool = False) -> None:
+    sev = f.get("severity", "low").lower()
+    badge_class = f"badge-{sev}"
+    cat = f.get("category", "general")
+    score = f.get("score", 0.0)
+    line = f.get("line", 1)
+    end_line = f.get("end_line", line)
+    tool = f.get("tool", "ast")
+    rule_id = f.get("rule_id", "RULE")
+    msg = f.get("message", "")
+    explanation = f.get("explanation", "")
+    suggested_fix = f.get("suggested_fix", "")
+    extra = f.get("extra", {})
+    ml_risk = extra.get("ml_risk")
+
+    ml_badge_str = f" [ML Risk: {int(ml_risk * 100)}%]" if ml_risk is not None else ""
+    header_text = (
+        f"#{idx} [{sev.upper()}]{ml_badge_str} Line {line}:{end_line} • {rule_id} ({tool}) — {msg[:75]}"
+    )
+
+    with st.expander(header_text, expanded=default_expanded):
+        col_info1, col_info2 = st.columns([3, 1])
+        with col_info1:
+            ml_badge_html = (
+                f'<span style="background-color:#7c3aed;color:white;padding:2px 8px;border-radius:4px;font-size:0.8rem;font-weight:bold;">ML RISK: {ml_risk * 100:.1f}%</span> &nbsp; '
+                if ml_risk is not None
+                else ""
+            )
+            st.markdown(
+                f'<span class="{badge_class}">{sev.upper()}</span> &nbsp; '
+                f'<span class="badge-cat">{cat.upper()}</span> &nbsp; '
+                f'{ml_badge_html}'
+                f'<code>Tool: {tool}</code> &nbsp; <code>Rule: {rule_id}</code>',
+                unsafe_allow_html=True,
+            )
+        with col_info2:
+            st.markdown(f"**Risk Score:** `{score:.2f}`")
+
+        st.markdown(f"**Description:** {msg}")
+
+        if explanation:
+            st.markdown("#### 💡 AI Root-Cause & Risk Analysis")
+            st.markdown(explanation)
+
+        if suggested_fix:
+            st.markdown("#### 🛠️ Suggested Fix")
+            st.code(suggested_fix, language="python")
+
+
+def render_findings_grouped(findings: list) -> None:
+    """Renders findings with Security & Bug shown by default, and Complexity & Style collapsed in Maintainability."""
+    if not findings:
+        st.success("🎉 No issues detected! The submitted code passed all static and quality checks.")
+        return
+
+    sec_and_bug = [f for f in findings if f.get("category") in ("security", "bug")]
+    maintainability = [f for f in findings if f.get("category") in ("complexity", "style")]
+    other = [f for f in findings if f.get("category") not in ("security", "bug", "complexity", "style")]
+    sec_and_bug.extend(other)
+
+    complexity_count = sum(1 for f in maintainability if f.get("category") == "complexity")
+    style_count = sum(1 for f in maintainability if f.get("category") == "style")
+
+    # 1. Security & Bug findings shown by default
+    if sec_and_bug:
+        st.markdown(f"##### 🛡️ Security & Bug Findings ({len(sec_and_bug)})")
+        for idx, f in enumerate(sec_and_bug, start=1):
+            render_finding_card(idx, f, default_expanded=(idx <= 3))
+    else:
+        st.info("✅ No Security or Bug findings detected.")
+
+    # 2. Maintainability (Complexity & Style) collapsed
+    if maintainability:
+        m_title = f"🛠️ Maintainability Issues ({len(maintainability)}: {complexity_count} Complexity, {style_count} Style)"
+        with st.expander(m_title, expanded=False):
+            st.caption("Architectural complexity and stylistic code smells (collapsed by default).")
+            for idx, f in enumerate(maintainability, start=len(sec_and_bug) + 1):
+                render_finding_card(idx, f, default_expanded=False)
+
+
 # Main Application Tabs
 tab_snippet, tab_pr = st.tabs(["📝 Review Code Snippet", "🐙 Review a Pull Request"])
 
@@ -265,37 +346,8 @@ with tab_snippet:
                 st.markdown(f"- Function at Line {hf['line']}: Predicted Risk **{hf['risk'] * 100:.1f}%**")
 
         st.markdown("<br>", unsafe_allow_html=True)
-        if not findings:
-            st.success("🎉 No issues detected! The submitted code passed all static and quality checks.")
-        else:
-            st.subheader(f"Findings ({len(findings)})")
-            for idx, f in enumerate(findings, start=1):
-                sev = f.get("severity", "low").lower()
-                badge_class = f"badge-{sev}"
-                score = f.get("score", 0.0)
-                line = f.get("line", 1)
-                end_line = f.get("end_line", line)
-                tool = f.get("tool", "ast")
-                rule_id = f.get("rule_id", "RULE")
-                msg = f.get("message", "")
-                explanation = f.get("explanation", "")
-                suggested_fix = f.get("suggested_fix", "")
-
-                header_text = f"#{idx} [{sev.upper()}] Line {line}:{end_line} • {rule_id} ({tool}) — {msg[:70]}"
-                with st.expander(header_text, expanded=(idx <= 3)):
-                    st.markdown(
-                        f'<span class="{badge_class}">{sev.upper()}</span> &nbsp; '
-                        f'<code>Tool: {tool}</code> &nbsp; <code>Rule: {rule_id}</code> &nbsp; '
-                        f'**Score:** `{score:.2f}`',
-                        unsafe_allow_html=True,
-                    )
-                    st.markdown(f"**Description:** {msg}")
-                    if explanation:
-                        st.markdown("#### 💡 AI Root-Cause Analysis")
-                        st.markdown(explanation)
-                    if suggested_fix:
-                        st.markdown("#### 🛠️ Suggested Fix")
-                        st.code(suggested_fix, language="python")
+        st.subheader(f"Findings ({len(findings)})")
+        render_findings_grouped(findings)
 
 # ==============================================================================
 # TAB 2: Review a Pull Request
@@ -437,55 +489,6 @@ with tab_pr:
                 f"*(High: {f_summary.get('high', 0)}, Medium: {f_summary.get('medium', 0)}, Low: {f_summary.get('low', 0)})*"
             )
 
-            if not f_findings:
-                st.success(f"✅ No issues detected on changed lines in `{f_name}`.")
-            else:
-                for idx, f in enumerate(f_findings, start=1):
-                    sev = f.get("severity", "low").lower()
-                    badge_class = f"badge-{sev}"
-                    cat = f.get("category", "general")
-                    score = f.get("score", 0.0)
-                    line = f.get("line", 1)
-                    end_line = f.get("end_line", line)
-                    tool = f.get("tool", "ast")
-                    rule_id = f.get("rule_id", "RULE")
-                    msg = f.get("message", "")
-                    explanation = f.get("explanation", "")
-                    suggested_fix = f.get("suggested_fix", "")
-                    extra = f.get("extra", {})
-                    ml_risk = extra.get("ml_risk")
-
-                    ml_badge_str = f" [ML Risk: {int(ml_risk * 100)}%]" if ml_risk is not None else ""
-                    header_text = (
-                        f"#{idx} [{sev.upper()}]{ml_badge_str} Line {line}:{end_line} • {rule_id} ({tool}) — {msg[:75]}"
-                    )
-
-                    with st.expander(header_text, expanded=(idx <= 2)):
-                        col_info1, col_info2 = st.columns([3, 1])
-                        with col_info1:
-                            ml_badge_html = (
-                                f'<span style="background-color:#7c3aed;color:white;padding:2px 8px;border-radius:4px;font-size:0.8rem;font-weight:bold;">ML RISK: {ml_risk * 100:.1f}%</span> &nbsp; '
-                                if ml_risk is not None
-                                else ""
-                            )
-                            st.markdown(
-                                f'<span class="{badge_class}">{sev.upper()}</span> &nbsp; '
-                                f'<span class="badge-cat">{cat.upper()}</span> &nbsp; '
-                                f'{ml_badge_html}'
-                                f'<code>Tool: {tool}</code> &nbsp; <code>Rule: {rule_id}</code>',
-                                unsafe_allow_html=True,
-                            )
-                        with col_info2:
-                            st.markdown(f"**Risk Score:** `{score:.2f}`")
-
-                        st.markdown(f"**Issue Description:** {msg}")
-
-                        if explanation:
-                            st.markdown("#### 💡 AI Root-Cause & Risk Analysis")
-                            st.markdown(explanation)
-
-                        if suggested_fix:
-                            st.markdown("#### 🛠️ Suggested Fix")
-                            st.code(suggested_fix, language="python")
+            render_findings_grouped(f_findings)
 
             st.markdown("<br>", unsafe_allow_html=True)

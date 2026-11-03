@@ -75,3 +75,9 @@ PatchPilot is designed as a **3-tier hybrid code reviewer** for Python, providin
   - Sends full file + contextual snippets in a single structured prompt.
   - Generates plain English root-cause diagnoses and minimal code fixes.
   - Non-blocking fallback preserves all findings if offline or API key is absent.
+
+## Tier 4: User Interface Presentation (`app/streamlit_app`)
+- **Default View**: **Security** and **Bug** findings are displayed expanded by default with root-cause explanations and remediations.
+- **Collapsed Maintainability Section**: Heuristic **Complexity** and **Style** findings are placed into a collapsed expander titled `🛠️ Maintainability Issues (N: X Complexity, Y Style)` to mitigate developer fatigue from architectural complexity rules.
+- **Diff-Filtered PR Review**: For GitHub pull requests, unchanged lines are suppressed with a count banner showing hidden pre-existing findings.
+
