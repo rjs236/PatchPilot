@@ -1,214 +1,333 @@
 # ⚡ PatchPilot: AI-Powered Automated Code Review
 
-> **Neural Storm 2026 Hackathon** | **Track:** Future Tech | **Problem FT-05:** AI-Powered Automated Code Review
+> **Neural Storm 2026 Hackathon** | **Track:** Future Tech | **Problem FT-05:** AI-Powered Automated Code Review  
+> [![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org/)
+> [![Tests Passing](https://img.shields.io/badge/tests-81%20passed-brightgreen.svg)](https://pytest.org/)
+> [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-PatchPilot is a next-generation, hybrid code reviewer for Python designed to eliminate code smells, subtle logic bugs, severe security vulnerabilities, and excessive architectural complexity before code merges.
+PatchPilot is a hybrid automated code review system for Python designed to detect subtle runtime bugs, security vulnerabilities, and architectural complexity before code is merged.
 
 ---
 
-## 🎯 The Problem
-Traditional code reviews present a persistent dilemma for modern engineering teams:
-- **Human reviewers are overburdened**, often missing subtle runtime bugs, security holes, and complexity drift.
-- **Pure Linters produce high false-positive noise** without explanation or remediation, leading to developer fatigue.
-- **Pure LLM reviewers hallucinate syntax rules**, lack deterministic reliability, and are too costly to run indiscriminately across full repositories.
+## 🎯 Problem Statement (FT-05)
 
-## 💡 The Solution: 3-Layer Hybrid Architecture
-PatchPilot resolves this by fusing deterministic static analysis with intelligent ranking and targeted LLM synthesis:
+Modern engineering teams face an ongoing trade-off in code review:
+- **Human reviewers are overburdened**, frequently missing subtle security vulnerabilities, resource leaks, and complexity drift under tight release schedules.
+- **Pure Linters produce high false-positive noise** without explanation or remediation, leading to alert fatigue where developers dismiss critical security notices.
+- **Pure LLM reviewers hallucinate syntax rules**, lack deterministic reliability, are non-reproducible, and incur prohibitive token latency and cost when run indiscriminately across entire codebases.
 
-1. **Layer 1: Static Analysis Engine**
-   - **Custom Python AST Rules**: Identifies mutable default arguments, bare `except:` blocks, hazardous dynamic calls (`eval`/`exec`), loose `== None` identity comparisons, cyclomatic complexity (>10 medium, >15 high), deep nesting (>4 levels), long functions (>50 lines), excessive parameter lists (>6 args), and syntax errors.
+---
+
+## 💡 What PatchPilot Does: 3-Layer Hybrid Architecture
+
+PatchPilot solves this by fusing deterministic static analysis with an empirical machine learning risk prior and targeted Gemini LLM enrichment:
+
+```mermaid
+flowchart TD
+    A["Python Code Input (Snippet or GitHub PR)"] --> B["Layer 1: Static Analysis Engine"]
+    
+    subgraph L1["Layer 1: Deterministic Static Analysis"]
+        B1["Custom Python AST Analyzer\n(Mutable defaults, bare except, eval/exec, complexity)"]
+        B2["Bandit\n(Security flaws, unsafe deserialization, shell injection)"]
+        B3["Ruff\n(Fast AST correctness, bugbear anomalies, syntax checks)"]
+        B --> B1
+        B --> B2
+        B --> B3
+    end
+
+    B1 --> C["Layer 2: Ranking & Prioritization Engine"]
+    B2 --> C
+    B3 --> C
+
+    subgraph L2["Layer 2: Multi-Factor Scoring & ML Risk Prior"]
+        C1["Trained Gradient-Boosting Risk Classifier\n(Predicts vulnerability risk from AST + TF-IDF)"]
+        C --> C1
+        C2["Composite Scoring & De-Duplication\nScore = SeverityWeight x Confidence x CategoryWeight x (1 + MLRisk)"]
+        C1 --> C2
+    end
+
+    C2 --> D{"Gemini AI Enabled?"}
+    D -- Yes --> E["Layer 3: Gemini AI Enrichment\n(Single batched request for top-15 findings)"]
+    D -- No / Offline --> F["Deterministic Output\n(Findings, Line Context, Risk Scores)"]
+    E --> G["Final Review Report\n(Findings, Root-Cause Explanations, Actionable Fixes)"]
+    F --> G
+```
+
+1. **Layer 1: Deterministic Static Analysis**
+   - **Custom AST Visitor**: Identifies mutable default arguments, bare `except:` blocks, hazardous dynamic execution (`eval`/`exec`), loose `== None` identity checks, cyclomatic complexity (>10 medium, >15 high), deep nesting (>4 levels), long functions (>50 lines), excessive parameter lists (>6 args), and syntax errors.
    - **Bandit**: Scans for known Python vulnerability patterns (injection, insecure deserialization, unsafe crypto).
-   - **Ruff**: Fast static linter checking AST correctness, pyflakes (`F`), flake8-bugbear (`B`), and syntax/runtime anomalies (`E9`).
-2. **Layer 2: Multi-Factor Scoring, ML Risk Prior & Ranking Engine**
+   - **Ruff**: Fast static linter checking AST correctness, pyflakes (`F`), flake8-bugbear (`B`), and syntax anomalies (`E9`).
+
+2. **Layer 2: Multi-Factor Scoring, De-Duplication & ML Risk Prior**
    - Ranks findings by a composite risk score:
      $$\text{Score} = \text{SeverityWeight} \times \text{Confidence} \times \text{CategoryWeight} \times (1 + \text{MLRisk})$$
-   - **Trained ML Code Risk Classifier**: On production (non-test) Python functions from PyCode-Vul, PatchPilot's gradient-boosting risk model reaches ROC-AUC 0.82 [0.80-0.84] and F1 0.46 [0.41-0.51] on a cluster-isolated random split (N=2,236; 23% vulnerable; majority-class accuracy 76.9%), with recall of only 32% at the default threshold. On a held-out-repository split (N=1,052; 84 positives, mostly from two repositories) it reaches ROC-AUC 0.96 [0.94-0.98] and F1 0.73 [0.65-0.80]; this benchmark is small and imbalanced, so we treat it as supporting evidence only. Our audit found that 42% of the raw dataset were unit tests with a 74% vulnerable-label rate caused by fix-commit mining, and a trivial is_test baseline alone reached 0.70 AUC, so we removed tests, assertion counts and repository-identifying tokens from training. Labels remain noisy, and the model learns to separate vulnerable from patched code rather than to discover new vulnerabilities, so it is used only as a risk prior that re-ranks findings from Bandit, Ruff and custom AST checks.
-   - Intelligent de-duplication merges alerts colliding on `(line, category)`, ensuring developers only see the highest-impact finding.
-3. **Layer 3: Gemini AI Enrichment (`google-genai` SDK)**
-   - Sends file context and top 15 prioritized findings to Gemini in **one single batched JSON request** (temperature 0.2).
-   - Provides clear, plain English root-cause diagnosis.
-   - Generates minimal, copy-pasteable production fixes.
-   - **Resilient Fallback**: If offline or no API key is set, review completes without disruption.
+   - **HistGradientBoosting Classifier**: Trained on non-test Python functions from PyCode-Vul, providing an empirical risk prior based on structural AST features and vocabulary.
+   - **De-Duplication**: Merges overlapping alerts colliding on `(line, category)` so developers see only the highest-impact finding per line.
+
+3. **Layer 3: Targeted Gemini AI Enrichment (`google-genai` SDK)**
+   - Sends file context and top 15 prioritized findings in a **single batched JSON request** (temperature 0.2).
+   - Explains the root-cause defect in plain English and proposes minimal, copy-pasteable production fixes.
+   - **Resilient Fallback**: Operates completely offline with zero disruption when no API key is provided.
 
 ---
 
-## 📊 Benchmark & Empirical Evaluation
+## ✨ Features
 
-On the main benchmark, Bandit alone has higher F1 (0.768) than full PatchPilot (0.575) and higher recall; static PatchPilot reaches recall 0.905 but with a 49% false-positive rate caused mostly by maintainability rules; once the ML prior is applied with a validation-chosen threshold, full PatchPilot behaves much like the ML model alone. Note that our audit revealed 86% of Bandit's true positives came from generic constructs (asserts, bare excepts, /tmp strings) rather than the patched flaw; the benchmark measures agreement with commit-mined labels, not detection of the specific vulnerabilities. All decision thresholds were tuned on validation partitions and applied frozen to test sets without LLM calls on production (non-test) Python functions from PyCode-Vul ($N=2,236$; 23.1% positive rate).
-
-| Setup | Precision | Recall | F1 Score [95% CI] | FPR (Clean) | ROC-AUC [95% CI] | Runtime |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| **A. Bandit Alone** | **0.820** | 0.723 | **0.768 [0.737, 0.796]** | **0.048** | **0.849 [0.827, 0.869]** | 43 ms/func |
-| **B. Static PatchPilot** (AST + Bandit + Ruff) | 0.355 | **0.905** | 0.510 [0.484, 0.537] | 0.492 | 0.761 [0.739, 0.783] | 55 ms/func |
-| **C. Full PatchPilot** (Static + ML Prior) | 0.630 | 0.529 | 0.575 [0.537, 0.613] | 0.093 | 0.834 [0.814, 0.853] | 60 ms/func |
-| **D. ML Risk Prior Alone** (Reference) | 0.608 | 0.545 | 0.575 [0.536, 0.612] | 0.105 | 0.818 [0.796, 0.840] | **5 ms/func** |
-
-> **Key Trade-Offs & Findings**:
-> - **Bandit vs. PatchPilot Performance**: Bandit alone achieves higher F1 (0.768 vs. 0.575) and lower false-positive rate (4.8% vs. 9.3%) than full PatchPilot. PatchPilot's static analyzer achieves higher recall (**90.5%** vs. 72.3%, recovering 94 missed vulnerabilities), but has a 49.2% false-positive rate under the all-category setup due to maintainability rules.
-> - **Ranking Discrimination**: Incorporating the ML risk prior improves overall ranking discrimination from **0.761 [0.739, 0.783]** to **0.834 [0.814, 0.853]** ROC-AUC and increases PR-AUC from 0.486 to 0.650.
-> - **Bandit Audit Limitation**: 86.1% of Bandit True Positives trigger on generic risky API presence (such as `assert`, bare `except:`, `random`, or `/tmp`) rather than the actual line fixed in the vulnerability patch commit.
-> - **Exploratory Category-Restricted Analysis**: Restricting findings to security and bug categories only (excluding complexity and style) reduces Static FPR to 6.6% (F1 = 0.756) and Full PatchPilot FPR to 7.7% (F1 = 0.757).
-> - **Benchmark Hygiene Check (Excluded Unparseable Functions)**: Functions with dataset truncation (AST syntax errors after dedent) correlate with vulnerable labels (26 vs. 13 on Split A). Excluding these 39 unparseable functions ($N=2,197$) leaves all conclusions unchanged: Bandit F1 is 0.789 (+0.021), Static PatchPilot recall is 90.0% (-0.5%) with 48.9% FPR, and Full PatchPilot F1 is 0.559 (-0.017) with 8.6% FPR.
-> - **Supporting Repository-Holdout Split (Split B, $N=1,052$)**: Full PatchPilot achieves ROC-AUC **0.928 [0.901, 0.954]** and F1 0.469 [0.399, 0.544] with an FPR of 14.0%; Bandit alone achieves F1 0.672 [0.571, 0.757] with an FPR of 0.7%.
-> - **Full Details**: Detailed methodology, syntax error audit, and replication commands are documented in [`docs/results.md`](file:///c:/Users/rajas/OneDrive/Dokumen/Hackathon/docs/results.md) and [`eval/README.md`](file:///c:/Users/rajas/OneDrive/Dokumen/Hackathon/eval/README.md).
+- **📝 Interactive Snippet Review**: Live editor with syntax highlighting, `.py` file drag-and-drop, and preset scenarios (*Vulnerable & Buggy*, *Complex & Deeply Nested*, *Clean Idiomatic Code*).
+- **🐙 GitHub Pull Request Review**: Reviews any public PR URL, analyzes GitHub patch diffs, and surfaces findings **strictly on added or modified lines**.
+- **🛡️ Pre-existing Issue Suppression**: Automatically hides findings located on unchanged lines in PR files, reporting a clear `"N pre-existing issues hidden"` count.
+- **📦 100% Offline Demo Mode**: Bundled fictional sample PR (`octocat/demo-repo#42`) demonstrating SQL injection, shell execution, hardcoded secret, and bare except review without internet access or API keys.
+- **🛡️ Tiered UI Display**: Shows **Security** and **Bug** findings openly by default; groups **Complexity** and **Style** smells into a collapsed `🛠️ Maintainability Issues` expander to eliminate alert fatigue.
+- **🔍 System Health Self-Check**: UI sidebar monitors all 4 subsystems in real time: Static Analyzers, ML Model, Gemini AI, and GitHub Token status.
 
 ---
 
-## 📁 Repository Structure
+## 🌐 Live Demo & Screenshots
 
-```
-patchpilot/
-├── patchpilot/               # Core Python package
-│   ├── __init__.py
-│   ├── analyzers/
-│   │   ├── __init__.py
-│   │   ├── models.py         # Finding dataclass & serialization
-│   │   ├── ast_analyzer.py   # Custom Python AST visitor
-│   │   └── external.py       # Bandit & Ruff subprocess runners
-│   ├── ranker.py             # Weighted scoring & de-duplication
-│   ├── pipeline.py           # End-to-end review orchestrator
-│   ├── llm.py                # Gemini enrichment layer (google-genai)
-│   └── api.py                # FastAPI REST endpoints
-├── app/
-│   └── streamlit_app.py      # Interactive Streamlit dashboard
-├── tests/                    # Pytest test suite (100% offline, mocked)
-├── ml/                       # ML layer roadmap & training models (Phase 2)
-├── docs/                     # Documentation & AI tools disclosure
-│   ├── AI_TOOLS.md           # Mandatory AI tools disclosure log
-│   └── ARCHITECTURE.md       # Architectural deep-dive
-├── requirements.txt          # Production dependencies
-├── requirements-dev.txt      # Testing & development dependencies
-├── .env.example              # Environment template
-├── .gitignore
-└── README.md
-```
+- **Live Deployment Link**: *[Hugging Face Space / Streamlit Community Cloud link placeholder]*
+
+### Application Screenshots
+
+| Interactive Snippet Review | GitHub PR Review (Diff-Filtered) |
+|:---:|:---:|
+| ![Dashboard Snippet Review](docs/screenshots/dashboard_snippet_review.png)<br>*(Caption: Interactive snippet review showing security findings, risk scores, and Gemini AI root-cause analysis)* | ![Dashboard PR Review](docs/screenshots/dashboard_pr_review.png)<br>*(Caption: GitHub PR review mode displaying diff-filtered alerts on modified lines and hidden pre-existing issues count)* |
+
+| Collapsed Maintainability Tier | Animated Demo Walkthrough |
+|:---:|:---:|
+| ![Maintainability Collapsed](docs/screenshots/maintainability_collapsed.png)<br>*(Caption: Collapsible maintainability expander separating complexity/style smells from security defects)* | ![PatchPilot Demo Walkthrough](docs/screenshots/patchpilot_demo.gif)<br>*(Caption: Animated walkthrough: analyzing a Python vulnerability and loading the offline demo PR)* |
 
 ---
 
-## 🚀 Quickstart Guide
+## 🛠️ Tech Stack & Libraries
+
+- **Language**: Python 3.10+ (Tested through Python 3.13)
+- **Static Analysis**: Python `ast`, `bandit` (v1.9.4), `ruff` (v0.17.3)
+- **Machine Learning**: `scikit-learn` (v1.9.1), `joblib` (v1.6.0), `numpy` (v2.5.4), `pandas` (v3.1.0)
+- **AI / LLM Integration**: Google Gemini via official `google-genai` SDK (v2.34.0)
+- **Web Dashboard**: `streamlit` (v1.66.1)
+- **REST API**: `fastapi` (v0.162.0), `uvicorn` (v0.54.0), `pydantic` (v2.14.2)
+- **GitHub Integration**: GitHub REST API v3 via `requests` (v2.34.2)
+- **Testing**: `pytest` (v9.2.0), `pytest-mock` (v3.17.0), `httpx` (v0.28.1)
+
+---
+
+## 🚀 Quickstart & Running Locally
 
 ### 1. Prerequisites
-- Python 3.10+ (Tested on Python 3.13)
+- Python 3.10 or higher (Python 3.11, 3.12, 3.13 supported)
 - Git
 
-### 2. Environment Setup
+### 2. Clone and Setup Environment
 ```bash
-# Clone and enter directory
-cd patchpilot
+# Clone the repository
+git clone https://github.com/[YOUR-USERNAME]/PatchPilot.git
+cd PatchPilot
 
-# Create virtual environment
+# Create a virtual environment
 python -m venv .venv
 
-# Activate virtual environment
-# Windows:
+# Activate the virtual environment
+# On Windows:
 .\.venv\Scripts\activate
-# Linux/macOS:
+# On Linux / macOS:
 source .venv/bin/activate
 
-# Install dependencies
+# Install dependencies (pinned for reproducibility)
 pip install -r requirements-dev.txt
 ```
 
-### 3. Configure Environment Variables
-Copy `.env.example` to `.env`:
+### 3. Environment Variables (Optional)
+PatchPilot works **100% offline with zero environment variables set**. To enable optional Gemini explanations or higher GitHub rate limits, copy `.env.example` to `.env`:
 ```bash
 cp .env.example .env
 ```
-Add your Google Gemini API key and optional GitHub token:
+Configure your keys in `.env`:
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
 GEMINI_MODEL=gemini-2.5-flash
 
-# Optional: GitHub token to increase GitHub API rate limits from 60 req/hr to 5,000 req/hr
+# Optional: Raises GitHub API rate limits from 60 req/hr to 5,000 req/hr
 # GITHUB_TOKEN=your_personal_access_token_here
 ```
-*(Notes: If no Gemini key is set, PatchPilot runs offline static & ML analysis without LLM enrichment. If no GitHub token is set, public PR reviews work out-of-the-box within the 60 requests/hour unauthenticated quota. Tokens are never stored, logged, or returned in errors).*
+*(Tokens and keys are never stored, logged, or printed. When unconfigured, the app falls back gracefully to static + ML analysis and 60 req/hr unauthenticated GitHub queries).*
 
----
+### 4. Running the Applications
 
-## 💻 Running PatchPilot
-
-### Option A: Launch Interactive Streamlit UI
+#### Option A: Launch Interactive Streamlit Dashboard
 ```bash
 streamlit run app/streamlit_app.py
 ```
 Open [http://localhost:8501](http://localhost:8501) in your browser.
-The interface features two dedicated workflows:
-- **Tab 1: 📝 Review Code Snippet**: Live code editor with syntax highlighting, `.py` file drag-and-drop uploader, and quick preset scenarios (*Vulnerable & Buggy*, *Complex & Deeply Nested*, *Clean Idiomatic Code*).
-- **Tab 2: 🐙 Review a Pull Request**: Paste any public GitHub PR URL (e.g. `https://github.com/owner/repo/pull/123`), configure LLM and ML toggles, or click **📦 Load Demo PR (Offline)** for an instant demo without network or rate limit concerns. Shows PR metadata, file-grouped findings on added/modified lines, hidden pre-existing counts, and skipped file reasons.
 
-### Option B: Start FastAPI REST Server
+#### Option B: Start FastAPI REST Service
 ```bash
 uvicorn patchpilot.api:app --host 0.0.0.0 --port 8000 --reload
 ```
 Interactive API docs available at: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-#### 1. Code Snippet Review (`POST /review`)
+**Sample Snippet Review API call:**
 ```bash
 curl -X POST "http://localhost:8000/review" \
   -H "Content-Type: application/json" \
-  -d '{
-    "code": "def run(x=[]):\n    eval(x)\n",
-    "filename": "vuln.py",
-    "use_llm": false,
-    "use_ml": true
-  }'
+  -d '{"code": "def run(x=[]):\n    eval(x)\n", "filename": "vuln.py", "use_llm": false, "use_ml": true}'
 ```
 
-#### 2. Pull Request Review (`POST /review/pr`)
+**Sample Pull Request Review API call:**
 ```bash
 curl -X POST "http://localhost:8000/review/pr" \
   -H "Content-Type: application/json" \
-  -d '{
-    "url": "https://github.com/psf/requests/pull/1234",
-    "use_llm": false,
-    "use_ml": true
-  }'
+  -d '{"url": "https://github.com/octocat/demo-repo/pull/42", "use_llm": false, "use_ml": true}'
 ```
 
-#### 3. Bundled Offline Demo PR (`GET /review/pr/demo`)
+**Bundled Offline Demo PR Endpoint:**
 ```bash
 curl -X GET "http://localhost:8000/review/pr/demo"
 ```
 
----
-
-## 🐙 GitHub Pull Request Review & Diff Filtering
-
-PatchPilot brings the review workflow directly to public GitHub pull requests:
-
-### Realistic Code Review Workflow
-- **Unified Diff Parsing**: Analyzes GitHub patch text to identify exactly which lines were added or modified in the PR.
-- **Diff-Aware Filtering**: Only findings that overlap changed lines (`start..end` line range in diff set) are surfaced in the final review. Pre-existing issues in unchanged lines are suppressed and reported as `"N pre-existing issues hidden"`.
-- **Function Risk Alignment**: ML function risk scores are linked only to functions that touch modified lines.
-
-### Safe GitHub Client & Resource Limits
-- **Public GitHub REST API**: Queries PR metadata, paginates changed files, and retrieves head commit raw file contents.
-- **Resource Bounds**: Reviews at most **20 changed Python files** and **2,000 changed lines** per PR. Excess files or lines are safely skipped with a transparent audit list.
-- **File Filters**: Skips removed files, binary or oversized patches without diff text, and non-UTF-8 files.
-- **Rate Limit Resilience**: Unauthenticated requests are limited by GitHub to 60 req/hr. PatchPilot inspects `x-ratelimit-remaining` and `x-ratelimit-reset` headers and displays the exact UTC reset timestamp. Providing an optional `GITHUB_TOKEN` raises this quota to 5,000 req/hr.
-- **Token Privacy**: GitHub tokens are never logged, stored, printed, or exposed in any error message or API response.
-
-### 100% Offline Demo Mode
-A sample PR response is bundled at `patchpilot/data/demo_pr.json` featuring realistic Python vulnerabilities (SQL formatting, `subprocess(shell=True)`, hardcoded secret, bare except, and mutable default). Clicking **Load Demo PR** in Streamlit or calling `GET /review/pr/demo` runs completely offline without any GitHub or Gemini API calls.
-
----
-
-## 🧪 Running Automated Tests
-Run the comprehensive Pytest suite:
+### 5. Running Automated Tests & Benchmark Smoke Test
 ```bash
+# Run unit test suite (81 tests, 100% offline)
 pytest -v
+
+# Run benchmark smoke test (stratified sample of 100 functions)
+python eval/benchmark.py --sample-size 100
 ```
-All tests are 100% network-isolated:
-- Unit tests for all AST checks (mutable defaults, bare excepts, eval/exec, None comparison, complexity, deep nesting, long functions, too many args, syntax error recovery)
-- Ranker scoring formula, de-duplication, and order verification
-- External tool runner mocks and fallback validation
-- FastAPI TestClient endpoints (`/health`, `/review`, 200k char bounds)
-- Gemini mock verification and graceful offline handling
+
+---
+
+## 📊 Empirical Evaluation & Benchmark Results
+
+### 1. Headline Honest Summary
+On the main benchmark, Bandit alone has higher F1 (0.768) than full PatchPilot (0.575) and higher recall; static PatchPilot reaches recall 0.905 but with a 49% false-positive rate caused mostly by maintainability rules; once the ML prior is applied with a validation-chosen threshold, full PatchPilot behaves much like the ML model alone.
+
+On production (non-test) Python functions from PyCode-Vul, PatchPilot's gradient-boosting risk model reaches ROC-AUC 0.82 [0.80-0.84] and F1 0.46 [0.41-0.51] on a cluster-isolated random split (N=2,236; 23% vulnerable; majority-class accuracy 76.9%), with recall of only 32% at the default threshold. On a held-out-repository split (N=1,052; 84 positives, mostly from two repositories) it reaches ROC-AUC 0.96 [0.94-0.98] and F1 0.73 [0.65-0.80]; this benchmark is small and imbalanced, so we treat it as supporting evidence only. Our audit found that 42% of the raw dataset were unit tests with a 74% vulnerable-label rate caused by fix-commit mining, and a trivial is_test baseline alone reached 0.70 AUC, so we removed tests, assertion counts and repository-identifying tokens from training. Labels remain noisy, and the model learns to separate vulnerable from patched code rather than to discover new vulnerabilities, so it is used only as a risk prior that re-ranks findings from Bandit, Ruff and custom AST checks.
+
+### 2. Primary Benchmark Table: Split A Non-Test ($N=2,236$; 516 Vulnerable, 23.1%)
+
+All decision thresholds were tuned on validation partitions to maximize F1 and applied frozen to held-out test splits without LLM calls:
+
+| Setup | Precision | Recall | F1 Score [95% CI] | FPR (Clean) | ROC-AUC [95% CI] | PR-AUC | Runtime (ms/func) |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **A. Bandit Alone** | **0.8198** | 0.7229 | **0.7683 [0.7365, 0.7964]** | **0.0477** | 0.8486 [0.8272, 0.8687] | 0.7361 | 43.3 ms |
+| **B. Static PatchPilot** | 0.3554 | **0.9050** | 0.5104 [0.4839, 0.5372] | 0.4924 | 0.7612 [0.7385, 0.7829] | 0.4858 | 54.9 ms |
+| **C. Full PatchPilot** | 0.6305 | 0.5291 | 0.5753 [0.5369, 0.6126] | 0.0930 | 0.8337 [0.8137, 0.8528] | 0.6501 | 60.4 ms |
+| **D. ML Risk Prior Alone** | 0.6082 | 0.5446 | 0.5746 [0.5363, 0.6123] | 0.1052 | **0.8183 [0.7958, 0.8398]** | 0.6466 | **5.4 ms** |
+
+### 3. Bandit Audit Limitation
+Our audit revealed that **86.1% of Bandit's true positives on Split A came from generic risky constructs** (such as standard assertions `B101`, bare `except:` blocks `B110`, `/tmp` paths `B108`, pseudo-random calls `B311`, or hashing calls `B324`), rather than detection of the specific flaw patched in the commit. Consequently, the benchmark measures statistical agreement with commit-mined labels rather than detection of the specific vulnerabilities themselves.
+
+### 4. Excluded-Unparseable Sensitivity Note
+39 functions in Split A suffer from dataset truncation (AST syntax errors after dedent) that correlate with vulnerable labels (26 vulnerable vs. 13 clean, 66.7% positive rate vs 23.1% baseline). When these unparseable functions are excluded ($N=2,197$; 490 vulnerable, 1,707 clean), conclusions remain unchanged:
+- **Bandit Alone**: Recall is 0.7612 (+0.0383), FPR 0.0480 (+0.0003), F1 0.7894 [0.7576, 0.8188] (+0.0211), ROC-AUC 0.8682 (+0.0196). (Bandit skips unparseable files, so 26 unflagged vulnerable samples drop out of the denominator).
+- **Static PatchPilot**: Recall is 0.9000 (-0.0050), FPR 0.4886 (-0.0038), F1 0.4997 (-0.0107), ROC-AUC 0.7534 (-0.0078).
+- **Full PatchPilot**: Recall is 0.5041 (-0.0250), FPR 0.0861 (-0.0069), F1 0.5588 [0.5208, 0.5973] (-0.0165), ROC-AUC 0.8301 (-0.0036).
+- **ML Risk Prior Alone**: Recall is 0.5735 (+0.0289), FPR 0.1043 (-0.0009), F1 0.5922 (+0.0176), ROC-AUC 0.8223 (+0.0040).
+
+Across Split B, 0 functions were unparseable (0 vulnerable, 0 clean). Relative findings and conclusions remain completely identical.
+
+### 5. Exploratory: Category-Restricted Analysis (Security + Bug Only)
+
+> [!NOTE]
+> **Exploratory, added after reviewing the main results**: The primary benchmark evaluates all findings produced by the tools. Because AST complexity rules (`cyclomatic-complexity`, `long-function`, `too-many-args`) and style warnings flag structural characteristics rather than immediate vulnerabilities, this exploratory analysis isolates Setups B and C to only **security** and **bug** category findings (validation-tuned thresholds $B_{\text{sec}}=1.000, C_{\text{sec}}=1.271$ on Split A; $B_{\text{sec}}=1.000, C_{\text{sec}}=1.140$ on Split B):
+
+| Split | Setup | Precision | Recall | F1 Score [95% CI] | FPR (Clean) | ROC-AUC [95% CI] | PR-AUC |
+|---|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Split A Non-Test** | **B. Static (Sec + Bug)** | **0.7717** | 0.7403 | 0.7557 [0.7240, 0.7856] | **0.0657** | 0.8493 [0.8281, 0.8679] | 0.6690 |
+| **Split A Non-Test** | **C. Full (Sec + Bug)** | 0.7495 | **0.7655** | **0.7574 [0.7263, 0.7861]** | 0.0767 | **0.8578 [0.8373, 0.8761]** | **0.7253** |
+| **Split B Non-Test** | **B. Static (Sec + Bug)** | **0.6667** | **0.5476** | **0.6013 [0.5063, 0.6879]** | **0.0238** | 0.7524 [0.6984, 0.8061] | 0.4186 |
+| **Split B Non-Test** | **C. Full (Sec + Bug)** | 0.6571 | **0.5476** | 0.5974 [0.5033, 0.6829] | 0.0248 | **0.7544 [0.7001, 0.8081]** | **0.4682** |
+
+Restricting findings to security and bug categories on Split A reduces Static FPR from 49.2% to 6.6% (F1 rises from 0.510 to 0.756) and Full PatchPilot FPR from 9.3% to 7.7% (F1 rises from 0.575 to 0.757).
+
+### 6. The Test-Function Discovery and Remediations
+In commit-mined datasets (`PyCode-Vul`), 42.1% of samples were unit test functions, and 73.5% of test functions were labeled vulnerable because security fix commits frequently bundle regression tests. A trivial rule predicting `is_test -> vulnerable` alone achieved 0.700 ROC-AUC on Split A and 0.731 on Split B.
+- **Remediations Enacted**:
+  1. Filtered all test functions out of training, validation, and evaluation splits.
+  2. Removed `num_asserts` from AST features.
+  3. Excluded test-specific vocabulary from TF-IDF feature space.
+  4. Built runtime guardrails (`is_test_function`) into `ml/inference.py` to prevent scoring unit tests.
+
+*Full benchmark methodology, calibration curves, and error analysis are documented in [`docs/results.md`](docs/results.md).*
+
+---
+
+## 📁 Project Structure
+
+```
+PatchPilot/
+├── app/
+│   └── streamlit_app.py          # Interactive Streamlit dashboard
+├── patchpilot/                   # Core application package
+│   ├── analyzers/
+│   │   ├── ast_analyzer.py       # Custom Python AST visitor & heuristics
+│   │   ├── external.py           # Bandit & Ruff subprocess runners
+│   │   └── models.py             # Finding dataclass & serialization
+│   ├── api.py                    # FastAPI REST endpoints (/review, /review/pr)
+│   ├── data/
+│   │   └── demo_pr.json          # Fictional bundled sample PR data
+│   ├── diff_utils.py             # Unified diff parser & line filtering
+│   ├── github_pr.py              # GitHub REST API client & bounds enforcement
+│   ├── llm.py                    # Gemini enrichment layer (google-genai)
+│   ├── pipeline.py               # End-to-end review orchestrator
+│   └── ranker.py                 # Multi-factor scoring & de-duplication
+├── ml/                           # ML risk classifier & feature engineering
+│   ├── artifacts/                # Frozen trained models & metrics (<1MB)
+│   │   ├── baseline_model.joblib
+│   │   └── baseline_model_clean.joblib
+│   ├── features.py               # AST complexity & TF-IDF vectorizer
+│   └── inference.py              # RiskPredictor runtime engine
+├── eval/                         # Reproducible benchmark suite
+│   ├── benchmark.py              # Evaluation runner for Setups A, B, C, D
+│   ├── results.json              # Frozen Split A test metrics & CIs
+│   └── results_split_b.json      # Frozen Split B test metrics & CIs
+├── docs/                         # Documentation & submission artifacts
+│   ├── AI_TOOLS.md               # AI tools disclosure log
+│   ├── ARCHITECTURE.md           # System design & scoring specification
+│   ├── DEMO_SCRIPT.md            # 2:30 video walkthrough script
+│   ├── results.md                # In-depth benchmark results & sensitivity
+│   ├── screenshots/              # UI demo screenshots & GIF
+│   └── SUBMISSION_CHECKLIST.md   # Pre-deadline verification checklist
+├── tests/                        # 81 automated unit & integration tests
+├── .env.example                  # Environment configuration template
+├── .gitignore                    # Comprehensive ignores (.env, datasets, caches)
+├── LICENSE                       # MIT License
+├── requirements.txt              # Pinned production dependencies
+└── requirements-dev.txt          # Testing & development dependencies
+```
+
+---
+
+## ⚠️ Limitations & Responsible Use
+
+1. **Static Analysis & Heuristic Scope**: PatchPilot is an automated assistant, not a formal verification system. It can produce false positives (e.g. flagging complex but safe logic) and false negatives (e.g. distributed race conditions or novel business-logic flaws).
+2. **Commit-Mined ML Labels**: The ML risk classifier is trained on historical security fix commits and identifies patterns characteristic of pre-patch vs. post-patch code. It serves as an empirical risk prior to re-rank static findings, not as a standalone vulnerability oracle.
+3. **Privacy & Data Security**:
+   - Code submitted is processed strictly in-memory. PatchPilot never logs, stores, or uses user code to train models.
+   - Do not submit proprietary or sensitive code to third-party APIs without organizational authorization.
+   - External Gemini calls (if enabled) are stateless and only send prioritized finding context.
+4. **Human Review Required**: All AI-suggested code fixes must be inspected, tested, and reviewed by human engineers before merging into production repositories.
 
 ---
 
 ## 🤖 AI Disclosure
-In adherence to the Neural Storm 2026 hackathon requirements, all AI assistance is logged in [`docs/AI_TOOLS.md`](file:///c:/Users/rajas/OneDrive/Dokumen/Hackathon/docs/AI_TOOLS.md).
-- **Antigravity IDE Agent**: Used for project scaffolding, architectural coordination, and unit test generation.
-- **Google Gemini (google-genai SDK)**: Used at runtime for code review explanation and fix generation.
+
+In accordance with Neural Storm 2026 hackathon guidelines, all AI assistance is logged in [`docs/AI_TOOLS.md`](docs/AI_TOOLS.md):
+- **Google Antigravity Agent**: Utilized during development for project scaffolding, AST rule implementation, benchmark test automation, and documentation formatting.
+- **Google Gemini (`google-genai` SDK)**: Utilized at runtime in Layer 3 to provide plain English root-cause diagnosis and code remediations.
+
+---
+
+## 👥 Team
+
+- **Team Name**: `[TEAM NAME]`
+- **Members**:
+  - `[MEMBER NAMES]`
+
+---
+
+## 📚 Dataset Attribution & License
+
+- **PyCode-Vul**: Mined from public open-source Git commits associated with published CVE fixes.
+  - Source: `S-AIR-L/PyCode-Vul` (Hugging Face Datasets)
+  - Dataset Licence: *licence: verify on the dataset card*
+- **Software License**: PatchPilot is released under the [MIT License](LICENSE).
