@@ -160,6 +160,8 @@ On the main benchmark, Bandit alone has higher F1 (0.768) than full PatchPilot (
 
 ### 9.2 Primary Benchmark: Split A Non-Test ($N=2,236$; 516 Vulnerable, 23.1%)
 
+#### Primary Table: All Functions ($N=2,236$)
+
 | Setup | Precision | Recall | F1 Score [95% CI] | FPR (Clean) | ROC-AUC [95% CI] | PR-AUC | Runtime (ms/func) |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | **A. Bandit Alone** | **0.8198** | 0.7229 | **0.7683 [0.7365, 0.7964]** | **0.0477** | 0.8486 [0.8272, 0.8687] | 0.7361 | 43.3 ms |
@@ -167,11 +169,33 @@ On the main benchmark, Bandit alone has higher F1 (0.768) than full PatchPilot (
 | **C. Full PatchPilot** | 0.6305 | 0.5291 | 0.5753 [0.5369, 0.6126] | 0.0930 | 0.8337 [0.8137, 0.8528] | 0.6501 | 60.4 ms |
 | **D. ML Risk Prior Alone** | 0.6082 | 0.5446 | 0.5746 [0.5363, 0.6123] | 0.1052 | **0.8183 [0.7958, 0.8398]** | 0.6466 | **5.4 ms** |
 
-#### Confusion Matrices (Split A Non-Test)
-- **Setup A (Bandit Alone)**: $\text{TP}=373, \text{FP}=82, \text{TN}=1638, \text{FN}=143$
-- **Setup B (Static PatchPilot)**: $\text{TP}=467, \text{FP}=847, \text{TN}=873, \text{FN}=49$
-- **Setup C (Full PatchPilot)**: $\text{TP}=273, \text{FP}=160, \text{TN}=1560, \text{FN}=243$
-- **Setup D (ML Prior Alone)**: $\text{TP}=281, \text{FP}=181, \text{TN}=1539, \text{FN}=235$
+#### Hygiene Sensitivity Check: Excluded Unparseable Functions ($N=2,197$; 490 Vulnerable, 22.3%)
+
+> [!NOTE]
+> **Why this sensitivity check is performed**:
+> During our dataset audit (Section 9.9), we discovered that 39 snippets in Split A suffer from dataset truncation during commit mining (AST syntax errors even after `textwrap.dedent`), which strongly correlate with the vulnerable label (26 vulnerable vs. 13 clean, a 66.7% positive rate compared to the 23.1% baseline) and Ruff `E9` parser failures (53 vs. 27). Because Static PatchPilot's AST analyzer flags syntax errors as high-severity findings while Bandit skips unparseable files, this test checks whether dataset truncation artifacts bias the comparison. Across Split B, 0 functions were unparseable (0 vulnerable, 0 clean).
+> **Removed from Split A**: $N=39$ ($N_{\text{vuln}}=26$, $N_{\text{clean}}=13$).
+
+| Setup | Recall ($\Delta$) | FPR ($\Delta$) | F1 Score [95% CI] ($\Delta$) | ROC-AUC [95% CI] ($\Delta$) | Precision ($\Delta$) |
+|---|:---:|:---:|:---:|:---:|:---:|
+| **A. Bandit Alone** | 0.7612 (**+0.0383**) | 0.0480 (+0.0003) | **0.7894 [0.7576, 0.8188]** (**+0.0211**) | **0.8682 [0.8489, 0.8894]** (**+0.0196**) | 0.8198 (+0.0000) |
+| **B. Static PatchPilot** | **0.9000** (**-0.0050**) | 0.4886 (**-0.0038**) | 0.4997 [0.4695, 0.5254] (**-0.0107**) | 0.7534 [0.7310, 0.7748] (**-0.0078**) | 0.3459 (-0.0095) |
+| **C. Full PatchPilot** | 0.5041 (**-0.0250**) | **0.0861** (**-0.0069**) | 0.5588 [0.5208, 0.5973] (**-0.0165**) | 0.8301 [0.8103, 0.8497] (**-0.0036**) | 0.6269 (-0.0036) |
+| **D. ML Risk Prior Alone** | 0.5735 (**+0.0289**) | 0.1043 (**-0.0009**) | 0.5922 [0.5539, 0.6305] (**+0.0176**) | 0.8223 [0.7993, 0.8440] (**+0.0040**) | 0.6122 (+0.0040) |
+
+#### Confusion Matrices (All Functions vs. Excluded Unparseable)
+- **Setup A (Bandit Alone)**:
+  - All ($N=2,236$): $\text{TP}=373, \text{FP}=82, \text{TN}=1638, \text{FN}=143$
+  - Excluded ($N=2,197$): $\text{TP}=373, \text{FP}=82, \text{TN}=1625, \text{FN}=117$
+- **Setup B (Static PatchPilot)**:
+  - All ($N=2,236$): $\text{TP}=467, \text{FP}=847, \text{TN}=873, \text{FN}=49$
+  - Excluded ($N=2,197$): $\text{TP}=441, \text{FP}=834, \text{TN}=873, \text{FN}=49$
+- **Setup C (Full PatchPilot)**:
+  - All ($N=2,236$): $\text{TP}=273, \text{FP}=160, \text{TN}=1560, \text{FN}=243$
+  - Excluded ($N=2,197$): $\text{TP}=247, \text{FP}=147, \text{TN}=1560, \text{FN}=243$
+- **Setup D (ML Prior Alone)**:
+  - All ($N=2,236$): $\text{TP}=281, \text{FP}=181, \text{TN}=1539, \text{FN}=235$
+  - Excluded ($N=2,197$): $\text{TP}=281, \text{FP}=178, \text{TN}=1529, \text{FN}=209$
 
 ### 9.3 Supporting Benchmark: Split B Non-Test ($N=1,052$; 84 Vulnerable, 8.0%)
 
@@ -305,6 +329,18 @@ We audited all functions in the held-out test splits for syntax errors and parse
   2. **Template constructs**: In a few snippets from `saltstack/salt`, Jinja template placeholders (`{{ ... }}`) inside Python files caused AST syntax recovery.
 - **Pipeline Robustness Added**:
   While dedenting does not fix truncated dataset snippets, user-pasted code (such as indented methods copied from class definitions) frequently raises `IndentationError`. We added automatic `textwrap.dedent` handling to `analyze_ast` and `pipeline.review`, with full test coverage (`test_indented_snippet_is_dedented_and_parsed_successfully` and `test_review_indented_snippet`).
+
+#### Impact of Excluding Unparseable Snippets on Benchmark Conclusions
+Excluding the 39 unparseable snippets ($N_{\text{vuln}}=26, N_{\text{clean}}=13$) from Split A leaves $N=2,197$ valid functions (490 vulnerable, 1,707 clean). As detailed in Section 9.2:
+- **Bandit Recall and F1 increase**: Because Bandit produced no vulnerability alerts on the truncated functions, 26 unflagged vulnerable samples drop out of the denominator without altering true positives (373 TP), increasing Bandit recall from 72.3% to 76.1% (+3.8%) and F1 from 0.768 to 0.789 (+0.021).
+- **Static PatchPilot Recall and FPR decrease slightly**: Static PatchPilot previously flagged all 39 unparseable snippets as high-severity bugs. Removing them drops recall from 90.5% to 90.0% (-0.5%) and false positive rate from 49.2% to 48.9% (-0.4%).
+- **Full PatchPilot Recall and FPR decrease slightly**: Recall shifts from 52.9% to 50.4% (-2.5%) and FPR drops from 9.3% to 8.6% (-0.7%), with F1 moving from 0.575 to 0.559 (-0.017).
+- **ML Risk Prior Alone**: Recall shifts from 54.5% to 57.4% (+2.9%) and F1 from 0.575 to 0.592 (+0.018), with ROC-AUC stable at 0.822 (+0.004).
+- **Core Conclusions Remain Unchanged**:
+  1. Bandit alone retains higher F1 (0.789 vs. 0.559) and lower FPR (4.8% vs. 8.6%) than Full PatchPilot.
+  2. Static PatchPilot retains the highest recall (90.0% vs. 76.1% Bandit vs. 50.4% Full PatchPilot), at the cost of a ~49% false positive rate driven by maintainability heuristics.
+  3. The ML risk prior continues to improve ranking discrimination over Static PatchPilot (ROC-AUC 0.830 vs. 0.753).
+  4. Full PatchPilot continues to closely match the ML prior alone at validation-tuned thresholds.
 
 ### 9.10 UI Display: Security & Bug Defaults vs. Maintainability Collapsed
 
