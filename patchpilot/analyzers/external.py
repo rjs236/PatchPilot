@@ -84,8 +84,22 @@ def run_bandit(code: str, timeout: float = 10.0) -> List[Finding]:
                     },
                 )
             )
+    except subprocess.TimeoutExpired:
+        findings.append(
+            Finding(
+                tool="bandit",
+                rule_id="bandit-timeout",
+                category="style",
+                severity="low",
+                message=f"Bandit security scan timed out after {int(timeout)}s. Other checks completed normally.",
+                line=1,
+                end_line=1,
+                confidence=0.5,
+                extra={"timeout": timeout},
+            )
+        )
     except Exception:
-        # Always return [] on any failure, never crash
+        # Always return [] on unexpected tool failure, never crash
         return []
     finally:
         if tmp_path and os.path.exists(tmp_path):
@@ -168,8 +182,22 @@ def run_ruff(code: str, timeout: float = 10.0) -> List[Finding]:
                     extra={"fix": item.get("fix")},
                 )
             )
+    except subprocess.TimeoutExpired:
+        findings.append(
+            Finding(
+                tool="ruff",
+                rule_id="ruff-timeout",
+                category="style",
+                severity="low",
+                message=f"Ruff linter timed out after {int(timeout)}s. Other checks completed normally.",
+                line=1,
+                end_line=1,
+                confidence=0.5,
+                extra={"timeout": timeout},
+            )
+        )
     except Exception:
-        # Always return [] on any failure, never crash
+        # Always return [] on unexpected tool failure, never crash
         return []
     finally:
         if tmp_path and os.path.exists(tmp_path):

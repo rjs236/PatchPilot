@@ -86,3 +86,19 @@ def test_external_tools_handle_subprocess_failure_gracefully():
     with patch("subprocess.run", side_effect=OSError("Command not found")):
         assert run_bandit("import os") == []
         assert run_ruff("import os") == []
+
+
+def test_external_tools_handle_timeout_with_friendly_finding():
+    import subprocess
+    with patch("subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="bandit", timeout=10.0)):
+        findings = run_bandit("import os", timeout=10.0)
+        assert len(findings) == 1
+        assert findings[0].rule_id == "bandit-timeout"
+        assert "timed out after 10s" in findings[0].message
+
+    with patch("subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="ruff", timeout=10.0)):
+        findings = run_ruff("import os", timeout=10.0)
+        assert len(findings) == 1
+        assert findings[0].rule_id == "ruff-timeout"
+        assert "timed out after 10s" in findings[0].message
+
