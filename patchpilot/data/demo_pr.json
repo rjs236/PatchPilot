@@ -1,0 +1,121 @@
+{
+  "pr_metadata": {
+    "owner": "octocat",
+    "repo": "demo-repo",
+    "pull_number": 42,
+    "title": "feat: add user authentication service and database backup exporter",
+    "author": "octocat-dev",
+    "base_branch": "main",
+    "head_branch": "feat/user-auth-exporter",
+    "head_sha": "7d8f921a4e1234567890abcdef1234567890abcd",
+    "html_url": "https://github.com/octocat/demo-repo/pull/42"
+  },
+  "summary": {
+    "total": 5,
+    "high": 3,
+    "medium": 1,
+    "low": 1
+  },
+  "pre_existing_hidden_count": 4,
+  "skipped_files": [
+    {
+      "filename": "README.md",
+      "reason": "Non-Python file"
+    },
+    {
+      "filename": "tests/test_legacy.py",
+      "reason": "File was deleted in this pull request."
+    }
+  ],
+  "files": [
+    {
+      "filename": "auth_service.py",
+      "changed_lines": [12, 13, 24, 25, 26, 31, 32],
+      "summary": {
+        "total": 3,
+        "high": 1,
+        "medium": 1,
+        "low": 1
+      },
+      "findings": [
+        {
+          "tool": "bandit",
+          "rule_id": "B105",
+          "category": "security",
+          "severity": "high",
+          "message": "Possible hardcoded password or JWT secret key detected.",
+          "line": 12,
+          "end_line": 12,
+          "confidence": 0.95,
+          "score": 4.75,
+          "explanation": "[pre-generated sample] Storing plaintext secrets or cryptographic keys directly in source code allows credential extraction through repository leaks, forks, or logs.",
+          "suggested_fix": "# Load cryptographic secret from environment variable\nimport os\nJWT_SECRET = os.environ.get('JWT_SECRET_KEY')\nif not JWT_SECRET:\n    raise RuntimeError('JWT_SECRET_KEY environment variable is required')"
+        },
+        {
+          "tool": "ast",
+          "rule_id": "bare-except",
+          "category": "bug",
+          "severity": "medium",
+          "message": "Bare 'except:' clauses catch SystemExit and KeyboardInterrupt, concealing errors.",
+          "line": 25,
+          "end_line": 26,
+          "confidence": 0.9,
+          "score": 2.7,
+          "explanation": "[pre-generated sample] A bare except block catches all exceptions unconditionally, including KeyboardInterrupt, SystemExit, and MemoryError, which prevents clean process termination and hides root causes.",
+          "suggested_fix": "except Exception as exc:\n    logger.error('Failed to authenticate token: %s', exc)\n    raise AuthenticationError('Invalid credentials') from exc"
+        },
+        {
+          "tool": "ast",
+          "rule_id": "mutable-default-args",
+          "category": "bug",
+          "severity": "low",
+          "message": "Mutable default argument 'roles=[]' is shared across function calls.",
+          "line": 31,
+          "end_line": 31,
+          "confidence": 0.95,
+          "score": 1.425,
+          "explanation": "[pre-generated sample] Python default parameter expressions are evaluated once at function definition time. Subsequent invocations that mutate roles will inadvertently corrupt state across distinct callers.",
+          "suggested_fix": "def create_user(username: str, roles: list[str] | None = None):\n    if roles is None:\n        roles = []"
+        }
+      ]
+    },
+    {
+      "filename": "backup_exporter.py",
+      "changed_lines": [18, 19, 20, 35, 36],
+      "summary": {
+        "total": 2,
+        "high": 2,
+        "medium": 0,
+        "low": 0
+      },
+      "findings": [
+        {
+          "tool": "bandit",
+          "rule_id": "B608",
+          "category": "security",
+          "severity": "high",
+          "message": "Possible SQL injection vector via string formatting in execute query.",
+          "line": 19,
+          "end_line": 19,
+          "confidence": 0.95,
+          "score": 4.9875,
+          "explanation": "[pre-generated sample] Constructing raw SQL strings with formatted user input bypasses database query parser sanitization, enabling malicious actors to manipulate queries, access unauthorized data, or drop tables.",
+          "suggested_fix": "# Use parameterized queries with bind variables\ncursor.execute('SELECT * FROM users WHERE id = %s', (user_id,))"
+        },
+        {
+          "tool": "bandit",
+          "rule_id": "B602",
+          "category": "security",
+          "severity": "high",
+          "message": "subprocess call with shell=True is dangerous and enables command injection.",
+          "line": 35,
+          "end_line": 35,
+          "confidence": 0.95,
+          "score": 4.9875,
+          "explanation": "[pre-generated sample] Executing external processes through the system shell (shell=True) with interpolated paths permits arbitrary command injection if the path parameter contains shell metacharacters (; & | ` $).",
+          "suggested_fix": "# Execute directly without shell interpretation using argument list\nsubprocess.run(['tar', '-czf', 'backup.tar.gz', path], check=True)"
+        }
+      ]
+    }
+  ]
+}
