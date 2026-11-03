@@ -137,7 +137,7 @@ pip install -r requirements-dev.txt
 ```
 
 ### 3. Environment Variables (Optional)
-PatchPilot works **100% offline with zero environment variables set**. To enable optional Gemini explanations or higher GitHub rate limits, copy `.env.example` to `.env`:
+PatchPilot works with zero environment variables set (static and ML analysis run locally without network access). To enable optional Gemini explanations or higher GitHub rate limits, copy `.env.example` to `.env`:
 ```bash
 cp .env.example .env
 ```
@@ -186,7 +186,7 @@ curl -X GET "http://localhost:8000/review/pr/demo"
 
 ### 5. Running Automated Tests & Benchmark Smoke Test
 ```bash
-# Run unit test suite (81 tests, 100% offline)
+# Run unit test suite (81 tests, runs locally without network access)
 pytest -v
 
 # Run benchmark smoke test (stratified sample of 100 functions)
@@ -214,10 +214,10 @@ All decision thresholds were tuned on validation partitions to maximize F1 and a
 | **D. ML Risk Prior Alone** | 0.6082 | 0.5446 | 0.5746 [0.5363, 0.6123] | 0.1052 | **0.8183 [0.7958, 0.8398]** | 0.6466 | **5.4 ms** |
 
 ### 3. Bandit Audit Limitation
-Our audit revealed that **86.1% of Bandit's true positives on Split A came from generic risky constructs** (such as standard assertions `B101`, bare `except:` blocks `B110`, `/tmp` paths `B108`, pseudo-random calls `B311`, or hashing calls `B324`), rather than detection of the specific flaw patched in the commit. Consequently, the benchmark measures statistical agreement with commit-mined labels rather than detection of the specific vulnerabilities themselves.
+Our audit revealed that **86.1% of Bandit's true positives on Split A came from generic constructs** rather than detection of the specific flaw patched in the commit: the top rules among true positives were B110 (try/except/pass, 181), B101 (assert, 149), B108 (hardcoded /tmp, 73), B311 (random, 49), B602 (subprocess shell=True, 47), and B324 (md5/sha1, 37). Consequently, the benchmark measures statistical agreement with commit-mined labels rather than detection of the specific vulnerabilities themselves.
 
 ### 4. Excluded-Unparseable Sensitivity Note
-39 functions in Split A suffer from dataset truncation (AST syntax errors after dedent) that correlate with vulnerable labels (26 vulnerable vs. 13 clean, 66.7% positive rate vs 23.1% baseline). When these unparseable functions are excluded ($N=2,197$; 490 vulnerable, 1,707 clean), conclusions remain unchanged:
+39 of 2,236 non-test functions in Split A (1.7%), all from sqlmap (with 0 in Split B), suffer from dataset truncation (AST syntax errors after dedent) that correlate with vulnerable labels (26 vulnerable vs. 13 clean, 66.7% positive rate vs 23.1% baseline). When these unparseable functions are excluded ($N=2,197$; 490 vulnerable, 1,707 clean), conclusions remain unchanged:
 - **Bandit Alone**: Recall is 0.7612 (+0.0383), FPR 0.0480 (+0.0003), F1 0.7894 [0.7576, 0.8188] (+0.0211), ROC-AUC 0.8682 (+0.0196). (Bandit skips unparseable files, so 26 unflagged vulnerable samples drop out of the denominator).
 - **Static PatchPilot**: Recall is 0.9000 (-0.0050), FPR 0.4886 (-0.0038), F1 0.4997 (-0.0107), ROC-AUC 0.7534 (-0.0078).
 - **Full PatchPilot**: Recall is 0.5041 (-0.0250), FPR 0.0861 (-0.0069), F1 0.5588 [0.5208, 0.5973] (-0.0165), ROC-AUC 0.8301 (-0.0036).
@@ -302,9 +302,8 @@ PatchPilot/
 1. **Static Analysis & Heuristic Scope**: PatchPilot is an automated assistant, not a formal verification system. It can produce false positives (e.g. flagging complex but safe logic) and false negatives (e.g. distributed race conditions or novel business-logic flaws).
 2. **Commit-Mined ML Labels**: The ML risk classifier is trained on historical security fix commits and identifies patterns characteristic of pre-patch vs. post-patch code. It serves as an empirical risk prior to re-rank static findings, not as a standalone vulnerability oracle.
 3. **Privacy & Data Security**:
-   - Code submitted is processed strictly in-memory. PatchPilot never logs, stores, or uses user code to train models.
-   - Do not submit proprietary or sensitive code to third-party APIs without organizational authorization.
-   - External Gemini calls (if enabled) are stateless and only send prioritized finding context.
+   - Code is analysed in temporary files that are deleted immediately and PatchPilot does not store it. If you enable LLM explanations, the code and findings are sent to Google's Gemini API, so do not use private code without permission.
+   - When LLM explanations are disabled, PatchPilot executes completely locally without external API queries.
 4. **Human Review Required**: All AI-suggested code fixes must be inspected, tested, and reviewed by human engineers before merging into production repositories.
 
 ---

@@ -16,7 +16,7 @@
 
 ### [0:20 – 1:00] 2. Live Snippet Review: Security Flaw, Scoring, and Gemini Fix (40 seconds)
 **Screen Action:**
-1. Click the **"Code Snippet"** tab.
+1. Click the **"📝 Review Code Snippet"** tab.
 2. Select the sample snippet or paste the following vulnerable Python code into the code box:
 
 ```python
@@ -35,8 +35,8 @@ def render_user_avatar(username, image_data):
     return f"/tmp/thumb_{username}.png"
 ```
 
-3. Ensure **"Enable Gemini AI Explanations"** is checked.
-4. Click the **"Analyze Code Snippet"** button.
+3. Ensure **"Enable Gemini AI Enrichment"** is checked in the sidebar.
+4. Click the **"🚀 Analyze Code Snippet"** button.
 
 **Voiceover:**
 > "Let's review a real security flaw: image resizing code with an unsanitized command string passed to `subprocess.call` with `shell=True`.  
@@ -47,18 +47,20 @@ def render_user_avatar(username, image_data):
 
 ### [1:00 – 1:40] 3. Offline Demo PR Review: Diff-Aware Changed-Line Filtering (40 seconds)
 **Screen Action:**
-1. Switch to the **"GitHub Pull Request"** tab.
-2. In the PR URL input field, notice the pre-filled demo URL: `https://github.com/octocat/demo-repo/pull/42`.
-3. Click the button: **"Load Offline Demo PR (Sample Data)"**.
-4. Scroll down to inspect the results:
-   - Point out the **PR Summary Metrics** (1 changed file: `app/auth.py`, 4 changed lines, Risk Level: **High**).
-   - Point out the section: **"Findings on Changed Lines (1)"** showing the new vulnerability (`subprocess.Popen` with `shell=True` on line 42).
-   - Expand the expandable container: **"Hidden Pre-existing Issues in Unchanged Lines (1)"** showing the untouched MD5 hash on line 12.
+1. Switch to the **"🐙 Review a Pull Request"** tab.
+2. Click the button: **"📦 Load Demo PR (Sample Data)"**.
+3. Scroll down to inspect the results:
+   - Point out the **PR Summary Metric Cards**: Total Findings on Changed Lines: **5** (3 High, 1 Medium, 1 Low).
+   - Point out the **Pre-existing Issues Hidden** notification banner: **4 findings** on unchanged lines in these files were filtered out.
+   - Note the **Skipped Files** container (2 files: `README.md` non-Python, `tests/test_legacy.py` deleted).
+   - Point out the two reviewed changed files:
+     * `auth_service.py` (7 changed lines): 3 findings open by default under Security & Bug—Line 12 [HIGH] `B105` (hardcoded JWT secret), Line 25 [MEDIUM] `bare-except`, Line 31 [LOW] `mutable-default-args`.
+     * `backup_exporter.py` (5 changed lines): 2 findings open by default under Security & Bug—Line 19 [HIGH] `B608` (SQL injection via string formatting), Line 35 [HIGH] `B602` (subprocess call with `shell=True`).
 
 **Voiceover:**
 > "Now let's examine the pull request review workflow. Developers dread linters that complain about legacy code they didn't touch. PatchPilot solves this with diff-aware filtering.  
-> Here we load our offline sample PR—`octocat/demo-repo#42`. The file `auth.py` contains two issues: an old MD5 checksum on line 12, and a newly committed `shell=True` on line 42.  
-> PatchPilot parses the Git unified diff, isolates the added lines, and reports *only* the new vulnerability as an actionable blocker. The legacy MD5 issue is cleanly tucked into a collapsed section of pre-existing issues. No alert fatigue, no wasted developer cycles."
+> Here we load our offline sample PR—`octocat/demo-repo#42`—with two modified files: `auth_service.py` and `backup_exporter.py`.  
+> Across both files, PatchPilot parses the Git unified diff, isolates the added lines, and surfaces exactly the five new flaws: a hardcoded JWT secret on line 12, a bare except on line 25, a mutable default list on line 31, a SQL injection on line 19, and a command injection on line 35. Meanwhile, 4 pre-existing legacy findings on untouched lines are cleanly tucked away behind a notification banner. No alert fatigue, no wasted developer cycles."
 
 ---
 
@@ -70,8 +72,8 @@ def render_user_avatar(username, image_data):
 
 **Voiceover:**
 > "To intelligently prioritize findings, PatchPilot uses a Gradient Boosting classifier trained on non-test Python functions from PyCode-Vul. But unlike black-box claims, we evaluated this rigorously.  
-> When tested against thousands of held-out functions, static analysis alone reaches 90.5% recall, but with a 49% false-positive rate driven by style rules. When we apply the ML prior as a gate, false positives drop from 49% down to 5.7%, while maintaining balanced precision.  
-> We also audited where Bandit excels: Bandit alone achieves 0.768 F1 on commit-mined datasets, but 86% of its hits flag generic dangerous imports rather than the specific commit flaw. PatchPilot transparently reports both, combining static breadth with ML precision."
+> When tested against thousands of held-out functions, static analysis alone reaches 90.5% recall, but with a 49% false-positive rate driven by style rules. When we apply the ML prior as a gate, false positives drop from 49% down to 9.3%, while maintaining balanced precision.  
+> We also audited where Bandit excels: Bandit alone achieves 0.768 F1 on commit-mined datasets, but 86% of its true positives came from generic constructs rather than the specific commit flaw—the top rules among true positives were B110 (try/except/pass, 181), B101 (assert, 149), B108 (hardcoded /tmp, 73), B311 (random, 49), B602 (subprocess shell=True, 47), and B324 (md5/sha1, 37). PatchPilot transparently reports both, combining static breadth with ML precision."
 
 ---
 
@@ -81,6 +83,6 @@ def render_user_avatar(username, image_data):
 2. Return to the main overview screen.
 
 **Voiceover:**
-> "PatchPilot is designed with zero-trust privacy: code is analyzed entirely in-memory and never logged or stored. If no Gemini API key is configured, the system gracefully falls back to 100% offline rule matching and ML scoring.  
+> "Code is analysed in temporary files that are deleted immediately and PatchPilot does not store it. If you enable LLM explanations, the code and findings are sent to Google's Gemini API, so do not use private code without permission. When no key is configured, static and ML analysis proceed locally.  
 > While currently focused on single-file Python analysis, our roadmap includes multi-language cross-file taint tracking and automated pull request comments via GitHub Actions.  
 > PatchPilot: actionable, explainable, and honest automated code review. Thank you!"

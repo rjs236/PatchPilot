@@ -173,8 +173,8 @@ On the main benchmark, Bandit alone has higher F1 (0.768) than full PatchPilot (
 
 > [!NOTE]
 > **Why this sensitivity check is performed**:
-> During our dataset audit (Section 9.9), we discovered that 39 snippets in Split A suffer from dataset truncation during commit mining (AST syntax errors even after `textwrap.dedent`), which strongly correlate with the vulnerable label (26 vulnerable vs. 13 clean, a 66.7% positive rate compared to the 23.1% baseline) and Ruff `E9` parser failures (53 vs. 27). Because Static PatchPilot's AST analyzer flags syntax errors as high-severity findings while Bandit skips unparseable files, this test checks whether dataset truncation artifacts bias the comparison. Across Split B, 0 functions were unparseable (0 vulnerable, 0 clean).
-> **Removed from Split A**: $N=39$ ($N_{\text{vuln}}=26$, $N_{\text{clean}}=13$).
+> During our dataset audit (Section 9.9), we discovered that 39 of 2,236 non-test functions in Split A (1.7%), all from sqlmap (with 0 in Split B), suffer from dataset truncation during commit mining (AST syntax errors even after `textwrap.dedent`), which strongly correlate with the vulnerable label (26 vulnerable vs. 13 clean, a 66.7% positive rate compared to the 23.1% baseline) and Ruff `E9` parser failures (53 vs. 27). Because Static PatchPilot's AST analyzer flags syntax errors as high-severity findings while Bandit skips unparseable files, this test checks whether dataset truncation artifacts bias the comparison. Across Split B, 0 functions were unparseable (0 vulnerable, 0 clean).
+> **Removed from Split A**: $N=39$ ($N_{\text{vuln}}=26$, $N_{\text{clean}}=13$, all from sqlmap).
 
 | Setup | Recall ($\Delta$) | FPR ($\Delta$) | F1 Score [95% CI] ($\Delta$) | ROC-AUC [95% CI] ($\Delta$) | Precision ($\Delta$) |
 |---|:---:|:---:|:---:|:---:|:---:|
@@ -266,7 +266,7 @@ We audited Bandit's detections on Split A ($N=2,236$, 516 vulnerable functions, 
   10. `B321` (ftplib): 1
 
 #### Limitation: Generic Risky-API Presence vs. Actual Vulnerable Change
-Of the 373 Bandit True Positives, **321 (86.1%)** were triggered exclusively by generic risky-API presence (`assert`, bare `except:`, `tempfile`/`/tmp`, pseudo-random calls, or md5/sha1 checksums) rather than the actual vulnerability that was fixed in the source commit. Only 52 TPs (13.9%) flagged a line plausibly connected to the actual security flaw (e.g. `subprocess(shell=True)`, SQL concatenation, or `eval`).
+Of the 373 Bandit True Positives, **321 (86.1%)** were triggered exclusively by generic constructs rather than the actual vulnerability fixed in the source commit: the top rules among true positives were B110 (try/except/pass, 181), B101 (assert, 149), B108 (hardcoded /tmp, 73), B311 (random, 49), B602 (subprocess shell=True, 47), and B324 (md5/sha1, 37). Only 52 TPs (13.9%) flagged a line plausibly connected to the actual security flaw (e.g. `subprocess(shell=True)`, SQL concatenation, or `eval`).
 
 #### 10 Sample Bandit True Positives (Inspected Line Context)
 1. `getPage(**kwargs)`: Flagged by `B110` on line `except:` (generic exception suppression).
