@@ -100,6 +100,50 @@ def unsafe_deserializer(data_str):
     assert unsafe_risk > safe_risk
 
 
+def test_predict_risk_skips_test_functions():
+    """Verify that inference strictly skips test functions and never scores them."""
+    predictor = get_default_predictor()
+    if not predictor.is_available:
+        pytest.skip("Model artifact not found, skipping inference test")
+
+    code_with_mixed_functions = """
+def process_user_data(payload):
+    import json
+    return json.loads(payload)
+
+def test_process_user_data():
+    assert process_user_data('{"a": 1}') == {"a": 1}
+
+def test_boundary_conditions():
+    assert 1 + 1 == 2
+    assert True is not False
+"""
+    # 1. Prediction on mixed code: should only return line 2 (process_user_data)
+    risks = predictor.predict_functions(code_with_mixed_functions)
+    assert 2 in risks
+    assert 6 not in risks  # test_process_user_data skipped
+    assert 9 not in risks  # test_boundary_conditions skipped
+    assert len(risks) == 1
+
+    # 2. Pure test suite: should return empty dict
+    pure_test_code = """
+def test_one():
+    assert True
+
+def test_two():
+    assert 1 == 1
+"""
+    assert predictor.predict_functions(pure_test_code) == {}
+
+    # 3. File path in tests/ directory should skip all functions
+    prod_code = """
+def helper(x):
+    return x * 2
+"""
+    assert predictor.predict_functions(prod_code, file_path="tests/test_helper.py") == {}
+    assert len(predictor.predict_functions(prod_code, file_path="src/helper.py")) == 1
+
+
 def test_predict_risk_fallback_when_unavailable():
     dummy_predictor = RiskPredictor(model_path="ml/artifacts/non_existent_model.joblib")
     assert not dummy_predictor.is_available
@@ -174,7 +218,7 @@ def load_data(raw):
     return pickle.loads(raw)
 """
     # With ML enabled
-    report_ml = review(code, filename="test.py", use_llm=False, use_ml=True)
+    report_ml = review(code, filename="data_loader.py", use_llm=False, use_ml=True)
     assert "high_risk_functions" in report_ml
     high_risk_funcs = report_ml["high_risk_functions"]
     assert len(high_risk_funcs) >= 1
@@ -183,6 +227,6 @@ def load_data(raw):
     assert high_risk_funcs[0]["risk"] >= 0.50
 
     # With ML disabled
-    report_no_ml = review(code, filename="test.py", use_llm=False, use_ml=False)
+    report_no_ml = review(code, filename="data_loader.py", use_llm=False, use_ml=False)
     assert "high_risk_functions" in report_no_ml
     assert report_no_ml["high_risk_functions"] == []

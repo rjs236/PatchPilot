@@ -42,7 +42,7 @@ def review(
     high_risk_functions: List[Dict[str, Any]] = []
 
     if use_ml and code.strip():
-        func_risks = predict_risk(code)
+        func_risks = predict_risk(code, file_path=filename)
         ml_line_risks = map_function_risks_to_lines(code, func_risks)
         high_risk_functions = [
             {"line": line, "risk": prob}

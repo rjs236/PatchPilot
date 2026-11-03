@@ -1,0 +1,456 @@
+{
+  "class_balance": {
+    "split_a_train": {
+      "name": "Split A (Train)",
+      "total": 12201,
+      "all_functions": {
+        "clean": 6310,
+        "vulnerable": 5891,
+        "pct_vulnerable": 48.28
+      },
+      "test_functions": {
+        "total": 5136,
+        "pct_of_total": 42.09,
+        "clean": 1359,
+        "vulnerable": 3777,
+        "pct_vulnerable": 73.54
+      },
+      "non_test_functions": {
+        "total": 7065,
+        "pct_of_total": 57.91,
+        "clean": 4951,
+        "vulnerable": 2114,
+        "pct_vulnerable": 29.92
+      }
+    },
+    "split_a_val": {
+      "name": "Split A (Val)",
+      "total": 2162,
+      "all_functions": {
+        "clean": 1402,
+        "vulnerable": 760,
+        "pct_vulnerable": 35.15
+      },
+      "test_functions": {
+        "total": 866,
+        "pct_of_total": 40.06,
+        "clean": 347,
+        "vulnerable": 519,
+        "pct_vulnerable": 59.93
+      },
+      "non_test_functions": {
+        "total": 1296,
+        "pct_of_total": 59.94,
+        "clean": 1055,
+        "vulnerable": 241,
+        "pct_vulnerable": 18.6
+      }
+    },
+    "split_a_test": {
+      "name": "Split A (Test)",
+      "total": 3257,
+      "all_functions": {
+        "clean": 2065,
+        "vulnerable": 1192,
+        "pct_vulnerable": 36.6
+      },
+      "test_functions": {
+        "total": 1021,
+        "pct_of_total": 31.35,
+        "clean": 345,
+        "vulnerable": 676,
+        "pct_vulnerable": 66.21
+      },
+      "non_test_functions": {
+        "total": 2236,
+        "pct_of_total": 68.65,
+        "clean": 1720,
+        "vulnerable": 516,
+        "pct_vulnerable": 23.08
+      }
+    },
+    "split_b_train": {
+      "name": "Split B (Train)",
+      "total": 13493,
+      "all_functions": {
+        "clean": 7033,
+        "vulnerable": 6460,
+        "pct_vulnerable": 47.88
+      },
+      "test_functions": {
+        "total": 5427,
+        "pct_of_total": 40.22,
+        "clean": 1405,
+        "vulnerable": 4022,
+        "pct_vulnerable": 74.11
+      },
+      "non_test_functions": {
+        "total": 8066,
+        "pct_of_total": 59.78,
+        "clean": 5628,
+        "vulnerable": 2438,
+        "pct_vulnerable": 30.23
+      }
+    },
+    "split_b_val": {
+      "name": "Split B (Val)",
+      "total": 2497,
+      "all_functions": {
+        "clean": 1424,
+        "vulnerable": 1073,
+        "pct_vulnerable": 42.97
+      },
+      "test_functions": {
+        "total": 1018,
+        "pct_of_total": 40.77,
+        "clean": 294,
+        "vulnerable": 724,
+        "pct_vulnerable": 71.12
+      },
+      "non_test_functions": {
+        "total": 1479,
+        "pct_of_total": 59.23,
+        "clean": 1130,
+        "vulnerable": 349,
+        "pct_vulnerable": 23.6
+      }
+    },
+    "split_b_test": {
+      "name": "Split B (Held-Out Repos Test)",
+      "total": 1630,
+      "all_functions": {
+        "clean": 1320,
+        "vulnerable": 310,
+        "pct_vulnerable": 19.02
+      },
+      "test_functions": {
+        "total": 578,
+        "pct_of_total": 35.46,
+        "clean": 352,
+        "vulnerable": 226,
+        "pct_vulnerable": 39.1
+      },
+      "non_test_functions": {
+        "total": 1052,
+        "pct_of_total": 64.54,
+        "clean": 968,
+        "vulnerable": 84,
+        "pct_vulnerable": 7.98
+      }
+    }
+  },
+  "trivial_baseline": {
+    "split_a_test": {
+      "accuracy": 0.7356,
+      "precision": 0.6621,
+      "recall": 0.5671,
+      "f1": 0.6109,
+      "roc_auc": 0.7
+    },
+    "split_b_test": {
+      "accuracy": 0.7325,
+      "precision": 0.391,
+      "recall": 0.729,
+      "f1": 0.509,
+      "roc_auc": 0.7312
+    }
+  },
+  "existing_model_subgroups": {
+    "test_functions": {
+      "accuracy": 0.9089,
+      "precision": 0.985,
+      "recall": 0.8757,
+      "f1": 0.9272,
+      "roc_auc": 0.9775
+    },
+    "non_test_functions": {
+      "accuracy": 0.8676,
+      "precision": 0.9074,
+      "recall": 0.4748,
+      "f1": 0.6234,
+      "roc_auc": 0.8959
+    }
+  },
+  "retrained_non_test_models": {
+    "majority_class": {
+      "accuracy": 0.7692,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": 0.5
+    },
+    "logistic_regression_standard": {
+      "accuracy": 0.7786,
+      "precision": 0.5139,
+      "recall": 0.7539,
+      "f1": 0.6112,
+      "roc_auc": 0.8414
+    },
+    "logistic_regression_tokens_filtered": {
+      "accuracy": 0.7026,
+      "precision": 0.4139,
+      "recall": 0.6938,
+      "f1": 0.5185,
+      "roc_auc": 0.7556
+    },
+    "hist_gradient_boosting_standard": {
+      "accuracy": 0.8658,
+      "precision": 0.8649,
+      "recall": 0.4961,
+      "f1": 0.6305,
+      "roc_auc": 0.8935
+    },
+    "hist_gradient_boosting_tokens_filtered": {
+      "accuracy": 0.8725,
+      "precision": 0.8889,
+      "recall": 0.5116,
+      "f1": 0.6494,
+      "roc_auc": 0.8959
+    },
+    "hist_gradient_boosting_calibrated": {
+      "accuracy": 0.8676,
+      "precision": 0.9074,
+      "recall": 0.4748,
+      "f1": 0.6234,
+      "roc_auc": 0.8959,
+      "brier_score": 0.1003
+    }
+  },
+  "repo_holdout_analysis": {
+    "majority_class": {
+      "accuracy": 0.8098,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": 0.5
+    },
+    "per_repository": {
+      "PyCQA/bandit": {
+        "size": 429,
+        "vulnerable_count": 0,
+        "pct_vulnerable": 0.0,
+        "test_function_count": 160,
+        "pct_test_functions": 37.3,
+        "old_model_acc": 0.958,
+        "old_model_auc": 0.5,
+        "clean_model_acc": 0.951,
+        "clean_model_auc": 0.5
+      },
+      "ansible/ansible": {
+        "size": 2,
+        "vulnerable_count": 0,
+        "pct_vulnerable": 0.0,
+        "test_function_count": 2,
+        "pct_test_functions": 100.0,
+        "old_model_acc": 1.0,
+        "old_model_auc": 0.5,
+        "clean_model_acc": 1.0,
+        "clean_model_auc": 0.5
+      },
+      "apache/airflow": {
+        "size": 1,
+        "vulnerable_count": 0,
+        "pct_vulnerable": 0.0,
+        "test_function_count": 1,
+        "pct_test_functions": 100.0,
+        "old_model_acc": 1.0,
+        "old_model_auc": 0.5,
+        "clean_model_acc": 1.0,
+        "clean_model_auc": 0.5
+      },
+      "django/django": {
+        "size": 59,
+        "vulnerable_count": 54,
+        "pct_vulnerable": 91.53,
+        "test_function_count": 29,
+        "pct_test_functions": 49.15,
+        "old_model_acc": 0.5763,
+        "old_model_auc": 0.9741,
+        "clean_model_acc": 0.5763,
+        "clean_model_auc": 0.9741
+      },
+      "pallets/flask": {
+        "size": 468,
+        "vulnerable_count": 134,
+        "pct_vulnerable": 28.63,
+        "test_function_count": 189,
+        "pct_test_functions": 40.38,
+        "old_model_acc": 0.9979,
+        "old_model_auc": 0.9987,
+        "clean_model_acc": 0.9979,
+        "clean_model_auc": 0.9987
+      },
+      "paramiko/paramiko": {
+        "size": 371,
+        "vulnerable_count": 38,
+        "pct_vulnerable": 10.24,
+        "test_function_count": 101,
+        "pct_test_functions": 27.22,
+        "old_model_acc": 0.9515,
+        "old_model_auc": 0.9683,
+        "clean_model_acc": 0.9515,
+        "clean_model_auc": 0.9683
+      },
+      "psf/requests": {
+        "size": 236,
+        "vulnerable_count": 77,
+        "pct_vulnerable": 32.63,
+        "test_function_count": 80,
+        "pct_test_functions": 33.9,
+        "old_model_acc": 0.9915,
+        "old_model_auc": 0.9985,
+        "clean_model_acc": 0.9915,
+        "clean_model_auc": 0.9985
+      },
+      "saltstack/salt": {
+        "size": 1,
+        "vulnerable_count": 1,
+        "pct_vulnerable": 100.0,
+        "test_function_count": 1,
+        "pct_test_functions": 100.0,
+        "old_model_acc": 1.0,
+        "old_model_auc": 0.5,
+        "clean_model_acc": 1.0,
+        "clean_model_auc": 0.5
+      },
+      "yaml/pyyaml": {
+        "size": 63,
+        "vulnerable_count": 6,
+        "pct_vulnerable": 9.52,
+        "test_function_count": 15,
+        "pct_test_functions": 23.81,
+        "old_model_acc": 0.9524,
+        "old_model_auc": 1.0,
+        "clean_model_acc": 0.9524,
+        "clean_model_auc": 1.0
+      }
+    }
+  },
+  "top_20_features": [
+    {
+      "rank": 1,
+      "feature": "num_asserts",
+      "importance_mean": 0.1012,
+      "importance_std": 0.00482
+    },
+    {
+      "rank": 2,
+      "feature": "risky_api_count",
+      "importance_mean": 0.02841,
+      "importance_std": 0.00235
+    },
+    {
+      "rank": 3,
+      "feature": "tfidf_password",
+      "importance_mean": 0.02133,
+      "importance_std": 0.00069
+    },
+    {
+      "rank": 4,
+      "feature": "tfidf_execute",
+      "importance_mean": 0.01339,
+      "importance_std": 0.00278
+    },
+    {
+      "rank": 5,
+      "feature": "tfidf_pass",
+      "importance_mean": 0.01213,
+      "importance_std": 0.00155
+    },
+    {
+      "rank": 6,
+      "feature": "tfidf_port",
+      "importance_mean": 0.00912,
+      "importance_std": 0.00041
+    },
+    {
+      "rank": 7,
+      "feature": "tfidf_param",
+      "importance_mean": 0.00737,
+      "importance_std": 0.00109
+    },
+    {
+      "rank": 8,
+      "feature": "tfidf_self",
+      "importance_mean": 0.0059,
+      "importance_std": 0.00195
+    },
+    {
+      "rank": 9,
+      "feature": "tfidf_join",
+      "importance_mean": 0.00549,
+      "importance_std": 0.00087
+    },
+    {
+      "rank": 10,
+      "feature": "num_returns",
+      "importance_mean": 0.00545,
+      "importance_std": 0.0008
+    },
+    {
+      "rank": 11,
+      "feature": "tfidf_s",
+      "importance_mean": 0.00508,
+      "importance_std": 0.00046
+    },
+    {
+      "rank": 12,
+      "feature": "tfidf_kb",
+      "importance_mean": 0.00362,
+      "importance_std": 0.00155
+    },
+    {
+      "rank": 13,
+      "feature": "tfidf_salt",
+      "importance_mean": 0.00339,
+      "importance_std": 0.0007
+    },
+    {
+      "rank": 14,
+      "feature": "num_calls",
+      "importance_mean": 0.00337,
+      "importance_std": 0.00117
+    },
+    {
+      "rank": 15,
+      "feature": "tfidf_ansible",
+      "importance_mean": 0.00333,
+      "importance_std": 0.00044
+    },
+    {
+      "rank": 16,
+      "feature": "tfidf_encode",
+      "importance_mean": 0.00324,
+      "importance_std": 0.00044
+    },
+    {
+      "rank": 17,
+      "feature": "arg_count",
+      "importance_mean": 0.00317,
+      "importance_std": 0.00044
+    },
+    {
+      "rank": 18,
+      "feature": "tfidf_value",
+      "importance_mean": 0.00304,
+      "importance_std": 0.00054
+    },
+    {
+      "rank": 19,
+      "feature": "tfidf_mlflowexception",
+      "importance_mean": 0.00299,
+      "importance_std": 0.0015
+    },
+    {
+      "rank": 20,
+      "feature": "max_depth",
+      "importance_mean": 0.0028,
+      "importance_std": 0.00058
+    }
+  ],
+  "calibration": {
+    "raw_brier_score": 0.0966,
+    "sigmoid_brier_score": 0.1017,
+    "isotonic_brier_score": 0.1003
+  }
+}

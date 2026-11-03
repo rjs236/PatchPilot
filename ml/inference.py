@@ -7,6 +7,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import joblib
 
+from ml.models import CalibratedModelWrapper
+
 _LOADED_MODEL_BUNDLE: Optional[Dict[str, Any]] = None
 _MODEL_TYPE: Optional[str] = None
 
@@ -18,6 +20,56 @@ def _get_artifacts_dir() -> Path:
         return candidate1
     candidate2 = Path("ml/artifacts")
     return candidate2
+
+
+def is_test_function(code: str, file_path: str = "") -> bool:
+    """Classify whether a given function or snippet is a test function.
+
+    Identifies test functions via file path conventions, AST inspection
+    (function name test_ / _test and assertion density), or regex fallback.
+    """
+    if not isinstance(code, str) or not code.strip():
+        return False
+
+    fp = str(file_path).lower() if file_path else ""
+    if any(p in fp for p in ["/test", "\\test", "test_", "_test.py", "tests/", "tests\\"]):
+        return True
+
+    # 1. AST Inspection
+    try:
+        tree = ast.parse(code)
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                fn = node.name.lower()
+                if fn.startswith("test") or fn.endswith("_test"):
+                    return True
+                # Check for test-dominant body
+                body_stmts = node.body
+                if body_stmts:
+                    assert_stmts = sum(1 for s in body_stmts if isinstance(s, ast.Assert))
+                    call_asserts = sum(
+                        1
+                        for s in ast.walk(node)
+                        if isinstance(s, ast.Call)
+                        and (
+                            (isinstance(s.func, ast.Attribute) and "assert" in s.func.attr.lower())
+                            or (isinstance(s.func, ast.Name) and "assert" in s.func.id.lower())
+                        )
+                    )
+                    total_test_calls = assert_stmts + call_asserts
+                    if total_test_calls >= 2 and total_test_calls >= len(body_stmts) * 0.4:
+                        return True
+    except Exception:
+        pass
+
+    # 2. Regex fallbacks
+    import re
+    if re.search(r"^\s*def\s+test[a-zA-Z0-9_]*\s*\(", code, re.MULTILINE):
+        return True
+    if re.search(r"\b(self\.assert|mock\.patch|pytest\.raises|unittest\.mock)\b", code):
+        return True
+
+    return False
 
 
 class RiskPredictor:
@@ -74,8 +126,12 @@ class RiskPredictor:
             except Exception:
                 pass
 
-    def predict_functions(self, code: str) -> Dict[int, float]:
-        """Predict risk probability for functions in given code."""
+    def predict_functions(self, code: str, file_path: str = "") -> Dict[int, float]:
+        """Predict risk probability for non-test functions in given code.
+
+        Test functions are explicitly detected and skipped (never scored)
+        to prevent test-function shortcut exploitation.
+        """
         if not code or not code.strip():
             return {}
 
@@ -87,8 +143,17 @@ class RiskPredictor:
         if not functions:
             return {}
 
-        start_lines = [item[0] for item in functions]
-        func_codes = [item[1] for item in functions]
+        # Strictly skip test functions
+        clean_functions = [
+            (start_line, func_code)
+            for start_line, func_code in functions
+            if not is_test_function(func_code, file_path=file_path)
+        ]
+        if not clean_functions:
+            return {}
+
+        start_lines = [item[0] for item in clean_functions]
+        func_codes = [item[1] for item in clean_functions]
 
         try:
             if self._model_type == "codebert":
@@ -175,14 +240,14 @@ def _extract_functions(code: str, max_chars_per_func: int = 3000) -> List[Tuple[
     return funcs
 
 
-def predict_risk(code: str) -> Dict[int, float]:
-    """Predict risk probability (0.0 to 1.0) for each function in the code.
+def predict_risk(code: str, file_path: str = "") -> Dict[int, float]:
+    """Predict risk probability (0.0 to 1.0) for each non-test function in the code.
 
     Returns:
         dict[int, float]: Mapping from function start line to predicted risk score.
-        Returns {} if no model is found or prediction fails.
+        Returns {} if no model is found, prediction fails, or all functions are tests.
     """
-    return get_default_predictor().predict_functions(code)
+    return get_default_predictor().predict_functions(code, file_path=file_path)
 
 
 def map_function_risks_to_lines(code: str, func_risks: Dict[int, float]) -> Dict[int, float]:
