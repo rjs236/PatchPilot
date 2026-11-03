@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+import textwrap
 from typing import Any, Dict, List, Optional
 
 from ml.inference import map_function_risks_to_lines, predict_risk
@@ -32,7 +33,7 @@ def review(
     Returns:
         Dictionary with filename, line count, severity summary, findings, and high-risk functions.
     """
-    code = code or ""
+    code = textwrap.dedent(code or "")
     line_count = len(code.splitlines()) if code else 0
 
     # 1. Static Analysis Layer

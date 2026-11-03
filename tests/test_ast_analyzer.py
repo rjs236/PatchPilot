@@ -180,3 +180,15 @@ def test_syntax_error_returns_high_severity_and_never_crashes():
     assert findings[0].severity == "high"
     assert findings[0].category == "bug"
     assert findings[0].line >= 1
+
+
+def test_indented_snippet_is_dedented_and_parsed_successfully():
+    # An indented method pasted directly from inside a class
+    code = "    def handle_request(self, target, payload=[]):\n        eval(payload)\n"
+    findings = analyze_ast(code)
+    # Should not produce syntax-error; should successfully detect mutable default and eval
+    rule_ids = {f.rule_id for f in findings}
+    assert "syntax-error" not in rule_ids
+    assert "mutable-default-arg" in rule_ids
+    assert "eval-exec" in rule_ids
+

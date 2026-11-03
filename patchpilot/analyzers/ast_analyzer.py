@@ -1,6 +1,7 @@
 """AST-based code analyzer implementing custom Python checks."""
 
 import ast
+import textwrap
 from typing import Any, List, Optional
 
 from patchpilot.analyzers.models import Finding
@@ -277,24 +278,32 @@ def analyze_ast(code: str, filename: str = "<string>") -> List[Finding]:
     if not code or not code.strip():
         return []
 
+    tree = None
     try:
         tree = ast.parse(code, filename=filename)
     except SyntaxError as exc:
-        lineno = exc.lineno or 1
-        end_lineno = exc.end_lineno or lineno
-        return [
-            Finding(
-                tool="ast",
-                rule_id="syntax-error",
-                category="bug",
-                severity="high",
-                message=f"SyntaxError: {exc.msg}",
-                line=lineno,
-                end_line=end_lineno,
-                confidence=1.0,
-                extra={"offset": exc.offset, "text": exc.text or ""},
-            )
-        ]
+        dedented = textwrap.dedent(code)
+        if dedented != code:
+            try:
+                tree = ast.parse(dedented, filename=filename)
+            except SyntaxError:
+                tree = None
+        if tree is None:
+            lineno = exc.lineno or 1
+            end_lineno = exc.end_lineno or lineno
+            return [
+                Finding(
+                    tool="ast",
+                    rule_id="syntax-error",
+                    category="bug",
+                    severity="high",
+                    message=f"SyntaxError: {exc.msg}",
+                    line=lineno,
+                    end_line=end_lineno,
+                    confidence=1.0,
+                    extra={"offset": exc.offset, "text": exc.text or ""},
+                )
+            ]
     except Exception as exc:
         return [
             Finding(

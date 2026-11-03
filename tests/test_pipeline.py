@@ -56,3 +56,13 @@ def test_review_with_llm_flag():
         assert mock_enrich.called
         assert "summary" in result
         assert "findings" in result
+
+
+def test_review_indented_snippet():
+    # Pasted snippet with leading 4 spaces
+    code = "    def process_order(items=[]):\n        eval('items')\n"
+    result = review(code, filename="snippet.py", use_llm=False)
+    rule_ids = [f["rule_id"] for f in result["findings"]]
+    assert "syntax-error" not in rule_ids
+    assert "mutable-default-arg" in rule_ids or "eval-exec" in rule_ids
+
