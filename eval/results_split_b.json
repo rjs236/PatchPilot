@@ -40,7 +40,7 @@
           0.8235
         ]
       },
-      "runtime_ms_per_func": 60.4
+      "runtime_ms_per_func": 53.5
     },
     "B_static_patchpilot": {
       "threshold": 1.0,
@@ -72,76 +72,279 @@
           0.8739
         ]
       },
-      "runtime_ms_per_func": 68.39
+      "runtime_ms_per_func": 57.99
     },
     "C_full_patchpilot": {
-      "threshold": 3.058,
-      "precision": 0.6556,
-      "recall": 0.7024,
-      "f1": 0.6782,
-      "fpr": 0.032,
+      "threshold": 2.058,
+      "precision": 0.3317,
+      "recall": 0.7976,
+      "f1": 0.4685,
+      "fpr": 0.1395,
       "confusion_matrix": {
-        "tn": 937,
-        "fp": 31,
-        "fn": 25,
-        "tp": 59
+        "tn": 833,
+        "fp": 135,
+        "fn": 17,
+        "tp": 67
       },
-      "roc_auc": 0.9335,
-      "average_precision": 0.7289,
+      "roc_auc": 0.9276,
+      "average_precision": 0.7254,
       "precision_at_k": {
         "10": 1.0,
         "25": 1.0,
-        "50": 0.84,
-        "100": 0.61
+        "50": 0.8,
+        "100": 0.59
       },
       "bootstrap_ci": {
         "f1_ci": [
-          0.5939,
-          0.7587
+          0.3985,
+          0.5437
         ],
         "auc_ci": [
-          0.9079,
-          0.9571
+          0.901,
+          0.9538
         ]
       },
-      "runtime_ms_per_func": 72.43
+      "runtime_ms_per_func": 60.52
     },
     "D_ml_prior_alone": {
-      "threshold": 0.5,
-      "precision": 0.6842,
-      "recall": 0.7738,
-      "f1": 0.7263,
-      "fpr": 0.031,
+      "threshold": 0.32,
+      "precision": 0.6495,
+      "recall": 0.75,
+      "f1": 0.6961,
+      "fpr": 0.0351,
       "confusion_matrix": {
-        "tn": 938,
-        "fp": 30,
-        "fn": 19,
-        "tp": 65
+        "tn": 934,
+        "fp": 34,
+        "fn": 21,
+        "tp": 63
       },
-      "roc_auc": 0.9715,
-      "average_precision": 0.8537,
+      "roc_auc": 0.964,
+      "average_precision": 0.8329,
       "precision_at_k": {
         "10": 1.0,
         "25": 1.0,
-        "50": 0.96,
-        "100": 0.65
+        "50": 0.98,
+        "100": 0.63
       },
       "bootstrap_ci": {
         "f1_ci": [
-          0.6503,
-          0.8
+          0.6222,
+          0.7723
         ],
         "auc_ci": [
-          0.9562,
-          0.9856
+          0.9422,
+          0.9833
         ]
       },
-      "runtime_ms_per_func": 4.05
+      "runtime_ms_per_func": 2.53
     }
+  },
+  "exploratory_category_restricted": {
+    "description": "Exploratory analysis added after reviewing main results. Evaluates Setups B and C counting only security and bug category findings (excluding complexity and style). Thresholds chosen strictly on validation.",
+    "B_static_sec_bug": {
+      "threshold": 1.0,
+      "precision": 0.6667,
+      "recall": 0.5476,
+      "f1": 0.6013,
+      "fpr": 0.0238,
+      "confusion_matrix": {
+        "tn": 945,
+        "fp": 23,
+        "fn": 38,
+        "tp": 46
+      },
+      "roc_auc": 0.7524,
+      "average_precision": 0.4186,
+      "precision_at_k": {
+        "10": 1.0,
+        "25": 0.84,
+        "50": 0.64,
+        "100": 0.46
+      },
+      "bootstrap_ci": {
+        "f1_ci": [
+          0.5063,
+          0.6879
+        ],
+        "auc_ci": [
+          0.6984,
+          0.8061
+        ]
+      }
+    },
+    "C_full_sec_bug": {
+      "threshold": 1.14,
+      "precision": 0.6571,
+      "recall": 0.5476,
+      "f1": 0.5974,
+      "fpr": 0.0248,
+      "confusion_matrix": {
+        "tn": 944,
+        "fp": 24,
+        "fn": 38,
+        "tp": 46
+      },
+      "roc_auc": 0.7544,
+      "average_precision": 0.4682,
+      "precision_at_k": {
+        "10": 1.0,
+        "25": 0.84,
+        "50": 0.64,
+        "100": 0.46
+      },
+      "bootstrap_ci": {
+        "f1_ci": [
+          0.5033,
+          0.6829
+        ],
+        "auc_ci": [
+          0.7001,
+          0.8081
+        ]
+      }
+    }
+  },
+  "bandit_sanity_check": {
+    "total_bandit_tps": 46,
+    "total_bandit_fps": 7,
+    "top_10_tp_rules": [
+      [
+        "B101",
+        30
+      ],
+      [
+        "B324",
+        16
+      ],
+      [
+        "B110",
+        11
+      ],
+      [
+        "B307",
+        2
+      ],
+      [
+        "B112",
+        1
+      ],
+      [
+        "B102",
+        1
+      ]
+    ],
+    "top_10_fp_rules": [
+      [
+        "B603",
+        3
+      ],
+      [
+        "B101",
+        1
+      ],
+      [
+        "B107",
+        1
+      ],
+      [
+        "B105",
+        1
+      ],
+      [
+        "B110",
+        1
+      ]
+    ],
+    "generic_risky_api_tp_count": 42,
+    "generic_risky_api_tp_percentage": 91.3,
+    "sample_10_tps": [
+      {
+        "index": 71,
+        "function": "def register(self, app: \"Flask\", options: dict) ->",
+        "rule_id": "B101",
+        "message": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+        "flagged_line": "assert app.blueprints[self.name] is self, ("
+      },
+      {
+        "index": 19,
+        "function": "def sha_utf8(x):",
+        "rule_id": "B324",
+        "message": "Use of weak SHA1 hash for security. Consider usedforsecurity=False",
+        "flagged_line": "return hashlib.sha1(x).hexdigest()"
+      },
+      {
+        "index": 5,
+        "function": "def build_digest_header(self, method, url):",
+        "rule_id": "B324",
+        "message": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+        "flagged_line": "return hashlib.md5(x).hexdigest()"
+      },
+      {
+        "index": 34,
+        "function": "def prepare_content_length(self, body):",
+        "rule_id": "B101",
+        "message": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+        "flagged_line": "assert False, \"If body is not null, it must either have a length or be streamable\""
+      },
+      {
+        "index": 30,
+        "function": "def check_compatibility(urllib3_version, chardet_v",
+        "rule_id": "B101",
+        "message": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+        "flagged_line": "assert urllib3_version != [\"dev\"]  # Verify urllib3 isn't installed from git."
+      },
+      {
+        "index": 29,
+        "function": "def connect(",
+        "rule_id": "B110",
+        "message": "Try, Except, Pass detected.",
+        "flagged_line": "except:"
+      },
+      {
+        "index": 20,
+        "function": "def connect(",
+        "rule_id": "B110",
+        "message": "Try, Except, Pass detected.",
+        "flagged_line": "except:"
+      },
+      {
+        "index": 18,
+        "function": "def connect(",
+        "rule_id": "B110",
+        "message": "Try, Except, Pass detected.",
+        "flagged_line": "except:"
+      },
+      {
+        "index": 58,
+        "function": "def build_digest_header(self, method, url):",
+        "rule_id": "B324",
+        "message": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+        "flagged_line": "return hashlib.md5(x).hexdigest()"
+      },
+      {
+        "index": 15,
+        "function": "def register(self, app: \"Flask\", options: dict) ->",
+        "rule_id": "B101",
+        "message": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+        "flagged_line": "assert app.blueprints[self.name] is self, ("
+      }
+    ],
+    "limitation_note": "Bandit true positives are predominantly triggered by generic risky API presence (B110 bare except, B101 assert, B108 tempfile, B311 random, B324 hashlib) rather than the actual vulnerable change itself."
   },
   "error_analysis": {
     "missed_vulnerabilities": [],
     "clean_false_alarms": [
+      {
+        "index": 85,
+        "repo": "psf/requests",
+        "header": "def should_bypass_proxies(url):",
+        "rules_triggered": [
+          "cyclomatic-complexity-medium",
+          "deep-nesting"
+        ],
+        "snippet": "def should_bypass_proxies(url):\n\"\"\"\nReturns whether we should bypass proxies or not.\n\"\"\"",
+        "reason": "Flagged by rules ['cyclomatic-complexity-medium', 'deep-nesting']; reason not verified"
+      },
       {
         "index": 99,
         "repo": "PyCQA/bandit",
@@ -151,7 +354,7 @@
           "cyclomatic-complexity-high"
         ],
         "snippet": "def main():\n# bring our logging stuff up as early as possible\ndebug = (logging.DEBUG if '-d' in sys.argv or '--debug' in sys.argv else\nlogging.INFO)",
-        "reason": "Flagged by rule long-function; idiomatic usage matches security smell."
+        "reason": "Flagged by rules ['long-function', 'cyclomatic-complexity-high']; reason not verified"
       },
       {
         "index": 101,
@@ -162,7 +365,7 @@
           "cyclomatic-complexity-high"
         ],
         "snippet": "def main():\n# bring our logging stuff up as early as possible\ndebug = ('-d' in sys.argv or '--debug' in sys.argv)\n_init_logger(debug)",
-        "reason": "Flagged by rule long-function; idiomatic usage matches security smell."
+        "reason": "Flagged by rules ['long-function', 'cyclomatic-complexity-high']; reason not verified"
       },
       {
         "index": 105,
@@ -173,29 +376,19 @@
           "cyclomatic-complexity-high"
         ],
         "snippet": "def register(self, app: \"Flask\", options: dict) -> None:\n\"\"\"Called by :meth:`Flask.register_blueprint` to register all\nviews and callbacks registered on the blueprint with the\napplication. Creates a :class:`.BlueprintSetupState` and calls",
-        "reason": "Flagged by rule long-function; idiomatic usage matches security smell."
+        "reason": "Flagged by rules ['long-function', 'cyclomatic-complexity-high']; reason not verified"
       },
       {
-        "index": 216,
-        "repo": "paramiko/paramiko",
-        "header": "def connect(self):",
-        "rules_triggered": [
-          "bare-except"
-        ],
-        "snippet": "def connect(self):\n\"\"\"\nMethod automatically called by the run() method of the AgentProxyThread\n\"\"\"",
-        "reason": "Flagged by rule bare-except; idiomatic usage matches security smell."
-      },
-      {
-        "index": 254,
-        "repo": "paramiko/paramiko",
-        "header": "def _auth(self, username, password, pkey, key_filenames, allow_agent,",
+        "index": 114,
+        "repo": "PyCQA/bandit",
+        "header": "def _get_literal_value(self, literal):",
         "rules_triggered": [
           "long-function",
-          "too-many-args",
-          "cyclomatic-complexity-high"
+          "cyclomatic-complexity-high",
+          "deep-nesting"
         ],
-        "snippet": "def _auth(self, username, password, pkey, key_filenames, allow_agent,\nlook_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host):\n\"\"\"\nTry, in order:",
-        "reason": "Flagged by rule long-function; idiomatic usage matches security smell."
+        "snippet": "def _get_literal_value(self, literal):\n'''Utility function to turn AST literals into native Python types\n:param literal: The AST literal to convert\n:return: The value of the AST literal",
+        "reason": "Flagged by rules ['long-function', 'cyclomatic-complexity-high']; reason not verified"
       }
     ]
   }

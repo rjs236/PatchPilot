@@ -40,7 +40,7 @@
           0.8687
         ]
       },
-      "runtime_ms_per_func": 80.11
+      "runtime_ms_per_func": 43.34
     },
     "B_static_patchpilot": {
       "threshold": 0.5,
@@ -72,72 +72,300 @@
           0.7829
         ]
       },
-      "runtime_ms_per_func": 90.63
+      "runtime_ms_per_func": 54.94
     },
     "C_full_patchpilot": {
-      "threshold": 1.0,
-      "precision": 0.3637,
-      "recall": 0.905,
-      "f1": 0.5189,
-      "fpr": 0.475,
+      "threshold": 2.858,
+      "precision": 0.6305,
+      "recall": 0.5291,
+      "f1": 0.5753,
+      "fpr": 0.093,
       "confusion_matrix": {
-        "tn": 903,
-        "fp": 817,
-        "fn": 49,
-        "tp": 467
+        "tn": 1560,
+        "fp": 160,
+        "fn": 243,
+        "tp": 273
       },
-      "roc_auc": 0.8317,
-      "average_precision": 0.6421,
+      "roc_auc": 0.8337,
+      "average_precision": 0.6501,
       "precision_at_k": {
         "10": 1.0,
-        "25": 0.96,
+        "25": 1.0,
         "50": 0.98,
         "100": 0.9
       },
       "bootstrap_ci": {
         "f1_ci": [
-          0.492,
-          0.5462
+          0.5369,
+          0.6126
         ],
         "auc_ci": [
-          0.8111,
-          0.8497
+          0.8137,
+          0.8528
         ]
       },
-      "runtime_ms_per_func": 100.15
+      "runtime_ms_per_func": 60.38
     },
     "D_ml_prior_alone": {
-      "threshold": 0.287,
-      "precision": 0.5671,
-      "recall": 0.5484,
-      "f1": 0.5576,
-      "fpr": 0.1256,
+      "threshold": 0.213,
+      "precision": 0.6082,
+      "recall": 0.5446,
+      "f1": 0.5746,
+      "fpr": 0.1052,
       "confusion_matrix": {
-        "tn": 1504,
-        "fp": 216,
-        "fn": 233,
-        "tp": 283
+        "tn": 1539,
+        "fp": 181,
+        "fn": 235,
+        "tp": 281
       },
-      "roc_auc": 0.7791,
-      "average_precision": 0.6122,
+      "roc_auc": 0.8183,
+      "average_precision": 0.6466,
+      "precision_at_k": {
+        "10": 1.0,
+        "25": 1.0,
+        "50": 1.0,
+        "100": 0.9
+      },
+      "bootstrap_ci": {
+        "f1_ci": [
+          0.5363,
+          0.6123
+        ],
+        "auc_ci": [
+          0.7958,
+          0.8398
+        ]
+      },
+      "runtime_ms_per_func": 5.44
+    }
+  },
+  "exploratory_category_restricted": {
+    "description": "Exploratory analysis added after reviewing main results. Evaluates Setups B and C counting only security and bug category findings (excluding complexity and style). Thresholds chosen strictly on validation.",
+    "B_static_sec_bug": {
+      "threshold": 1.0,
+      "precision": 0.7717,
+      "recall": 0.7403,
+      "f1": 0.7557,
+      "fpr": 0.0657,
+      "confusion_matrix": {
+        "tn": 1607,
+        "fp": 113,
+        "fn": 134,
+        "tp": 382
+      },
+      "roc_auc": 0.8493,
+      "average_precision": 0.669,
+      "precision_at_k": {
+        "10": 1.0,
+        "25": 1.0,
+        "50": 1.0,
+        "100": 0.96
+      },
+      "bootstrap_ci": {
+        "f1_ci": [
+          0.724,
+          0.7856
+        ],
+        "auc_ci": [
+          0.8281,
+          0.8679
+        ]
+      }
+    },
+    "C_full_sec_bug": {
+      "threshold": 1.271,
+      "precision": 0.7495,
+      "recall": 0.7655,
+      "f1": 0.7574,
+      "fpr": 0.0767,
+      "confusion_matrix": {
+        "tn": 1588,
+        "fp": 132,
+        "fn": 121,
+        "tp": 395
+      },
+      "roc_auc": 0.8578,
+      "average_precision": 0.7253,
       "precision_at_k": {
         "10": 1.0,
         "25": 1.0,
         "50": 0.98,
-        "100": 0.89
+        "100": 0.93
       },
       "bootstrap_ci": {
         "f1_ci": [
-          0.518,
-          0.5981
+          0.7263,
+          0.7861
         ],
         "auc_ci": [
-          0.7546,
-          0.8035
+          0.8373,
+          0.8761
         ]
-      },
-      "runtime_ms_per_func": 9.52
+      }
     }
+  },
+  "bandit_sanity_check": {
+    "total_bandit_tps": 373,
+    "total_bandit_fps": 82,
+    "top_10_tp_rules": [
+      [
+        "B110",
+        181
+      ],
+      [
+        "B101",
+        149
+      ],
+      [
+        "B108",
+        73
+      ],
+      [
+        "B311",
+        49
+      ],
+      [
+        "B602",
+        47
+      ],
+      [
+        "B324",
+        37
+      ],
+      [
+        "B105",
+        22
+      ],
+      [
+        "B608",
+        19
+      ],
+      [
+        "B104",
+        14
+      ],
+      [
+        "B307",
+        13
+      ]
+    ],
+    "top_10_fp_rules": [
+      [
+        "B608",
+        118
+      ],
+      [
+        "B603",
+        16
+      ],
+      [
+        "B105",
+        11
+      ],
+      [
+        "B607",
+        9
+      ],
+      [
+        "B108",
+        6
+      ],
+      [
+        "B113",
+        5
+      ],
+      [
+        "B110",
+        5
+      ],
+      [
+        "B604",
+        2
+      ],
+      [
+        "B602",
+        2
+      ],
+      [
+        "B321",
+        1
+      ]
+    ],
+    "generic_risky_api_tp_count": 321,
+    "generic_risky_api_tp_percentage": 86.1,
+    "sample_10_tps": [
+      {
+        "index": 441,
+        "function": "def getPage(**kwargs):",
+        "rule_id": "B110",
+        "message": "Try, Except, Pass detected.",
+        "flagged_line": "except:"
+      },
+      {
+        "index": 76,
+        "function": "def _set_isolation_level(self, isolation_level):",
+        "rule_id": "B101",
+        "message": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+        "flagged_line": "assert isolation_level in range(1, 5)     # Use set_autocommit for level = 0"
+      },
+      {
+        "index": 15,
+        "function": "def get_differing_containers(self):",
+        "rule_id": "B104",
+        "message": "Possible binding to all interfaces.",
+        "flagged_line": "expected_bound_ports[container_port] = [{'HostIp': \"0.0.0.0\", 'HostPort': \"\"}]"
+      },
+      {
+        "index": 183,
+        "function": "def prepare_arguments_for_docker_build_command(sel",
+        "rule_id": "B311",
+        "message": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "flagged_line": "self._opt_arg(\"UPGRADE_INVALIDATION_STRING\", f\"{random.randrange(2**32):x}\")"
+      },
+      {
+        "index": 165,
+        "function": "def munge(self, ds):",
+        "rule_id": "B101",
+        "message": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+        "flagged_line": "assert isinstance(ds, dict)"
+      },
+      {
+        "index": 149,
+        "function": "def _gen_pin_drives(pins):",
+        "rule_id": "B103",
+        "message": "Chmod setting a permissive mask 0o755 on file (tdir).",
+        "flagged_line": "os.chmod(tdir, 493)"
+      },
+      {
+        "index": 95,
+        "function": "def get(self, path, include_body=True):",
+        "rule_id": "B101",
+        "message": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+        "flagged_line": "assert self.request.method == \"HEAD\""
+      },
+      {
+        "index": 69,
+        "function": "def do_REQUEST(self):",
+        "rule_id": "B608",
+        "message": "Possible SQL injection vector through string-based query construction.",
+        "flagged_line": "_cursor.execute(\"SELECT * FROM users WHERE id=%s LIMIT 0, 1\" % base64.b64decode(\"%s===\" % self.param"
+      },
+      {
+        "index": 469,
+        "function": "def finish(self, chunk=None):",
+        "rule_id": "B101",
+        "message": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+        "flagged_line": "assert not self._write_buffer, \"Cannot send body with 304\""
+      },
+      {
+        "index": 377,
+        "function": "def saveHistory(completion=None):",
+        "rule_id": "B110",
+        "message": "Try, Except, Pass detected.",
+        "flagged_line": "except:"
+      }
+    ],
+    "limitation_note": "Bandit true positives are predominantly triggered by generic risky API presence (B110 bare except, B101 assert, B108 tempfile, B311 random, B324 hashlib) rather than the actual vulnerable change itself."
   },
   "error_analysis": {
     "missed_vulnerabilities": [
@@ -147,7 +375,7 @@
         "cwe": "UNKNOWN",
         "header": "def alter_db_table(self, model, old_db_table, new_db_table):",
         "snippet": "def alter_db_table(self, model, old_db_table, new_db_table):\n\"\"\"\nRenames the table a model points to.\n\"\"\"",
-        "reason": "Semantic/logic flaw (e.g. auth flow, boundary condition, or state check) with no syntactic static pattern."
+        "reason": "Inspected: Database table rename SQL generation/constraint handling in schema backend; logic flaw with no dangerous AST/Bandit API sink."
       },
       {
         "index": 251,
@@ -155,7 +383,7 @@
         "cwe": "UNKNOWN",
         "header": "def alter_db_table(self, model, old_db_table, new_db_table):",
         "snippet": "def alter_db_table(self, model, old_db_table, new_db_table):\n\"\"\"\nRenames the table a model points to.\n\"\"\"",
-        "reason": "Semantic/logic flaw (e.g. auth flow, boundary condition, or state check) with no syntactic static pattern."
+        "reason": "Inspected: Database table rename SQL generation/constraint handling in schema backend; logic flaw with no dangerous AST/Bandit API sink."
       },
       {
         "index": 276,
@@ -163,7 +391,7 @@
         "cwe": "UNKNOWN",
         "header": "def supports_transactions(self):",
         "snippet": "def supports_transactions(self):\n\"\"\"Confirm support for transactions.\"\"\"\nwith self.connection.cursor() as cursor:\ncursor.execute('CREATE TABLE ROLLBACK_TEST (X INT)')",
-        "reason": "Semantic/logic flaw (e.g. auth flow, boundary condition, or state check) with no syntactic static pattern."
+        "reason": "Inspected: Transaction capability probe executing table rollback test query; feature detection logic with no dangerous AST/Bandit API sink."
       },
       {
         "index": 353,
@@ -171,7 +399,7 @@
         "cwe": "UNKNOWN",
         "header": "def alter_db_table(self, model, old_db_table, new_db_table):",
         "snippet": "def alter_db_table(self, model, old_db_table, new_db_table):\n\"\"\"\nRenames the table a model points to.\n\"\"\"",
-        "reason": "Semantic/logic flaw (e.g. auth flow, boundary condition, or state check) with no syntactic static pattern."
+        "reason": "Inspected: Database table rename SQL generation/constraint handling in schema backend; logic flaw with no dangerous AST/Bandit API sink."
       },
       {
         "index": 360,
@@ -179,7 +407,7 @@
         "cwe": "UNKNOWN",
         "header": "def get_storage_engine(self, cursor, table_name):",
         "snippet": "def get_storage_engine(self, cursor, table_name):\n\"\"\"\nRetrieve the storage engine for a given table. Return the default\nstorage engine if the table doesn't exist.",
-        "reason": "Semantic/logic flaw (e.g. auth flow, boundary condition, or state check) with no syntactic static pattern."
+        "reason": "Inspected: MySQL information_schema table storage engine query; database introspection logic with no dangerous AST/Bandit API sink."
       }
     ],
     "clean_false_alarms": [
@@ -192,18 +420,7 @@
           "cyclomatic-complexity-high"
         ],
         "snippet": "def _curl_setup_request(curl, request, buffer, headers):\ncurl.setopt(pycurl.URL, native_str(request.url))\n# libcurl's magic \"Expect: 100-continue\" behavior causes delays\n# with servers that don't support it (which include, among others,",
-        "reason": "Flagged by rule long-function; idiomatic usage matches security smell."
-      },
-      {
-        "index": 522,
-        "repo": "mlflow/mlflow",
-        "header": "def run(",
-        "rules_triggered": [
-          "long-function",
-          "too-many-args"
-        ],
-        "snippet": "def run(\nuri,\nentry_point,\nversion,",
-        "reason": "Flagged by rule long-function; idiomatic usage matches security smell."
+        "reason": "Inspected: Flagged for long-function (>50 lines) and cyclomatic-complexity-high (>15); exhaustive pycurl option configuration in HTTP client backend."
       },
       {
         "index": 523,
@@ -215,7 +432,7 @@
           "cyclomatic-complexity-high"
         ],
         "snippet": "def latest(name,\nrev=None,\ntarget=None,\nrunas=None,",
-        "reason": "Flagged by rule long-function; idiomatic usage matches security smell."
+        "reason": "Inspected: Flagged for too-many-args and cyclomatic-complexity-high; Git branch/revision synchronization state handler in Salt module."
       },
       {
         "index": 524,
@@ -227,7 +444,7 @@
           "deep-nesting"
         ],
         "snippet": "def run(self):\n\"\"\"\nactually execute the module code backend\n\"\"\"",
-        "reason": "Flagged by rule long-function; idiomatic usage matches security smell."
+        "reason": "Inspected: Flagged for long-function, cyclomatic-complexity-high, and deep-nesting; Yum package manager execution loop in Ansible."
       },
       {
         "index": 525,
@@ -237,7 +454,17 @@
           "syntax-error"
         ],
         "snippet": "def installed(\nname,\nversion=None,\nrefresh=None,",
-        "reason": "Flagged by rule syntax-error; idiomatic usage matches security smell."
+        "reason": "Inspected: Flagged for syntax-error; Jinja/template syntax construct inside snippet causing AST parser recovery."
+      },
+      {
+        "index": 536,
+        "repo": "sqlmapproject/sqlmap",
+        "header": "def checkSqlInjection(place, parameter, value):",
+        "rules_triggered": [
+          "syntax-error"
+        ],
+        "snippet": "def checkSqlInjection(place, parameter, value):\n# Store here the details about boundaries and payload used to\n# successfully inject\ninjection = InjectionDict()",
+        "reason": "Flagged by rules ['syntax-error']; reason not verified"
       }
     ]
   }
