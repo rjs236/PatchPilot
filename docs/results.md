@@ -139,7 +139,11 @@ A simple rule predicting vulnerable if `is_test` achieved:
 
 ## 9. Full-Pipeline Benchmark Evaluation (Phase 4)
 
-To measure the real-world utility of PatchPilot's layered architecture, we evaluated the entire pipeline against a standard standalone Bandit run on held-out test splits. All evaluations were executed with deterministic parameters (seed 42, no LLM calls) on strictly non-test production functions.
+On the main benchmark, Bandit alone has higher F1 (0.768) than full PatchPilot (0.575) and higher recall; static PatchPilot reaches recall 0.905 but with a 49% false-positive rate caused mostly by maintainability rules; once the ML prior is applied with a validation-chosen threshold, full PatchPilot behaves much like the ML model alone. All evaluations were executed with deterministic parameters (seed 42, no LLM calls) on strictly non-test production functions from PyCode-Vul.
+
+> [!WARNING]
+> **Bandit Audit Limitation & Benchmark Scope**:
+> Our audit revealed that **86.1% of Bandit's true positives on Split A came from generic risky constructs** (such as standard assertions, bare `except:` blocks, `/tmp` paths, pseudo-random calls, or hashing calls), rather than detection of the specific flaw patched in the commit. Consequently, this benchmark measures statistical agreement with commit-mined labels rather than detection of the specific vulnerabilities themselves.
 
 ### 9.1 Evaluation Setups Compared
 
@@ -283,5 +287,32 @@ Of the 373 Bandit True Positives, **321 (86.1%)** were triggered exclusively by 
 3. **Precision@k Ranking**:
    - On Split A, Static PatchPilot achieved P@100 = 0.960 vs. 0.900 for Full PatchPilot.
    - On Split B, Full PatchPilot achieved P@100 = 0.590 vs. 0.450 for Static PatchPilot.
+
+### 9.9 Syntax Errors and Tool Parse Failures Audit
+
+We audited all functions in the held-out test splits for syntax errors and parser failures across AST parsing, Bandit, and Ruff:
+
+| Metric / Failure Type | Split A Non-Test ($N=2,236$) | Split B Non-Test ($N=1,052$) |
+|---|:---:|:---:|
+| **AST `syntax-error` Findings** | **39 total** (26 Vuln [5.04%], 13 Clean [0.76%]) | **0 total** (0 Vuln [0.0%], 0 Clean [0.0%]) |
+| **Bandit Parse Failures** | **5 total** (4 Vuln [0.78%], 1 Clean [0.06%]) | **0 total** (0 Vuln [0.0%], 0 Clean [0.0%]) |
+| **Ruff Syntax (`E9`) Failures** | **80 total** (53 Vuln [10.27%], 27 Clean [1.57%]) | **0 total** (0 Vuln [0.0%], 0 Clean [0.0%]) |
+
+#### Root Cause Investigation
+- **Is dedenting the cause?** No. Running `textwrap.dedent` on the raw code resolved **0 of the 39 AST syntax errors** on Split A and 0 on Split B.
+- **What actually causes the syntax errors?**
+  1. **Truncation during dataset mining**: All 39 AST syntax errors in Split A originate from `sqlmapproject/sqlmap` (e.g. `cmdLineParser` and `getPage`), where snippets were cut off mid-identifier, mid-string literal, or mid-expression around line 722 / ~30KB (e.g. `parser.formatter.format_o`, `help=SU`, `unterminated string literal`).
+  2. **Template constructs**: In a few snippets from `saltstack/salt`, Jinja template placeholders (`{{ ... }}`) inside Python files caused AST syntax recovery.
+- **Pipeline Robustness Added**:
+  While dedenting does not fix truncated dataset snippets, user-pasted code (such as indented methods copied from class definitions) frequently raises `IndentationError`. We added automatic `textwrap.dedent` handling to `analyze_ast` and `pipeline.review`, with full test coverage (`test_indented_snippet_is_dedented_and_parsed_successfully` and `test_review_indented_snippet`).
+
+### 9.10 UI Display: Security & Bug Defaults vs. Maintainability Collapsed
+
+To address the 49% false positive rate driven by complexity and style heuristics in full codebases, PatchPilot's Streamlit UI separates findings into two tiers:
+1. **Primary View (Default)**: **Security** and **Bug** findings are displayed openly by default with full risk scores, AI root-cause explanations, and suggested remediations.
+2. **Maintainability Section (Collapsed Expander)**: **Complexity** and **Style** findings (such as long functions, high cyclomatic complexity, deep nesting, and parameter count warnings) are grouped into a collapsed expander titled:
+   `🛠️ Maintainability Issues (N: X Complexity, Y Style)`
+   This applies uniformly across both Tab 1 (Snippet Review) and Tab 2 (Pull Request Review).
+
 
 
