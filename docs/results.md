@@ -151,32 +151,38 @@ To measure the real-world utility of PatchPilot's layered architecture, we evalu
 > [!IMPORTANT]
 > **Threshold Selection Protocol**:
 > All decision thresholds were selected on the validation partition to maximize F1 (Split A val $N=1,422$; Split B val $N=1,616$) and then applied frozen to the held-out test sets without tuning.
-> - Split A test thresholds: Bandit $\ge 0.100$, Static $\ge 0.500$, Full $\ge 1.000$, ML Prior $\ge 0.287$.
-> - Split B test thresholds: Bandit $\ge 0.100$, Static $\ge 1.000$, Full $\ge 3.058$, ML Prior $\ge 0.500$.
+> - Split A test thresholds: Bandit $\ge 0.100$, Static $\ge 0.500$, Full $\ge 2.858$, ML Prior $\ge 0.213$.
+> - Split B test thresholds: Bandit $\ge 0.100$, Static $\ge 1.000$, Full $\ge 2.058$, ML Prior $\ge 0.320$.
 
 ### 9.2 Primary Benchmark: Split A Non-Test ($N=2,236$; 516 Vulnerable, 23.1%)
 
 | Setup | Precision | Recall | F1 Score [95% CI] | FPR (Clean) | ROC-AUC [95% CI] | PR-AUC | Runtime (ms/func) |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **A. Bandit Alone** | **0.8198** | 0.7229 | **0.7683 [0.7365, 0.7964]** | **0.0477** | 0.8486 [0.8272, 0.8687] | 0.7361 | 80.1 ms |
-| **B. Static PatchPilot** | 0.3554 | **0.9050** | 0.5104 [0.4839, 0.5372] | 0.4924 | 0.7612 [0.7385, 0.7829] | 0.4858 | 90.6 ms |
-| **C. Full PatchPilot** | 0.3637 | **0.9050** | 0.5189 [0.4920, 0.5462] | 0.4750 | **0.8317 [0.8111, 0.8497]** | **0.6421** | 100.2 ms |
-| **D. ML Risk Prior Alone** | 0.5671 | 0.5484 | 0.5576 [0.5180, 0.5981] | 0.1256 | 0.7791 [0.7546, 0.8035] | 0.6122 | **9.5 ms** |
+| **A. Bandit Alone** | **0.8198** | 0.7229 | **0.7683 [0.7365, 0.7964]** | **0.0477** | 0.8486 [0.8272, 0.8687] | 0.7361 | 43.3 ms |
+| **B. Static PatchPilot** | 0.3554 | **0.9050** | 0.5104 [0.4839, 0.5372] | 0.4924 | 0.7612 [0.7385, 0.7829] | 0.4858 | 54.9 ms |
+| **C. Full PatchPilot** | 0.6305 | 0.5291 | 0.5753 [0.5369, 0.6126] | 0.0930 | 0.8337 [0.8137, 0.8528] | 0.6501 | 60.4 ms |
+| **D. ML Risk Prior Alone** | 0.6082 | 0.5446 | 0.5746 [0.5363, 0.6123] | 0.1052 | **0.8183 [0.7958, 0.8398]** | 0.6466 | **5.4 ms** |
 
 #### Confusion Matrices (Split A Non-Test)
 - **Setup A (Bandit Alone)**: $\text{TP}=373, \text{FP}=82, \text{TN}=1638, \text{FN}=143$
 - **Setup B (Static PatchPilot)**: $\text{TP}=467, \text{FP}=847, \text{TN}=873, \text{FN}=49$
-- **Setup C (Full PatchPilot)**: $\text{TP}=467, \text{FP}=817, \text{TN}=903, \text{FN}=49$
-- **Setup D (ML Prior Alone)**: $\text{TP}=283, \text{FP}=216, \text{TN}=1504, \text{FN}=233$
+- **Setup C (Full PatchPilot)**: $\text{TP}=273, \text{FP}=160, \text{TN}=1560, \text{FN}=243$
+- **Setup D (ML Prior Alone)**: $\text{TP}=281, \text{FP}=181, \text{TN}=1539, \text{FN}=235$
 
 ### 9.3 Supporting Benchmark: Split B Non-Test ($N=1,052$; 84 Vulnerable, 8.0%)
 
 | Setup | Precision | Recall | F1 Score [95% CI] | FPR (Clean) | ROC-AUC [95% CI] | PR-AUC | Runtime (ms/func) |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **A. Bandit Alone** | **0.8679** | 0.5476 | 0.6715 [0.5714, 0.7574] | **0.0072** | 0.7710 [0.7181, 0.8235] | 0.5406 | 60.4 ms |
-| **B. Static PatchPilot** | 0.2112 | **0.9405** | 0.3450 [0.2891, 0.3992] | 0.3048 | 0.8376 [0.7969, 0.8739] | 0.3314 | 68.4 ms |
-| **C. Full PatchPilot** | 0.6556 | 0.7024 | **0.6782 [0.5939, 0.7587]** | 0.0320 | **0.9335 [0.9079, 0.9571]** | **0.7289** | 72.4 ms |
-| **D. ML Risk Prior Alone** | 0.6842 | 0.7738 | 0.7263 [0.6503, 0.8000] | 0.0310 | 0.9715 [0.9562, 0.9856] | 0.8537 | **4.1 ms** |
+| **A. Bandit Alone** | **0.8679** | 0.5476 | 0.6715 [0.5714, 0.7574] | **0.0072** | 0.7710 [0.7181, 0.8235] | 0.5406 | 53.5 ms |
+| **B. Static PatchPilot** | 0.2112 | **0.9405** | 0.3450 [0.2891, 0.3992] | 0.3048 | 0.8376 [0.7969, 0.8739] | 0.3314 | 58.0 ms |
+| **C. Full PatchPilot** | 0.3317 | 0.7976 | 0.4685 [0.3985, 0.5437] | 0.1395 | 0.9276 [0.9010, 0.9538] | 0.7254 | 60.5 ms |
+| **D. ML Risk Prior Alone** | 0.6495 | 0.7500 | **0.6961 [0.6222, 0.7723]** | 0.0351 | **0.9640 [0.9422, 0.9833]** | **0.8329** | **2.5 ms** |
+
+#### Confusion Matrices (Split B Non-Test)
+- **Setup A (Bandit Alone)**: $\text{TP}=46, \text{FP}=7, \text{TN}=961, \text{FN}=38$
+- **Setup B (Static PatchPilot)**: $\text{TP}=79, \text{FP}=295, \text{TN}=673, \text{FN}=5$
+- **Setup C (Full PatchPilot)**: $\text{TP}=67, \text{FP}=135, \text{TN}=833, \text{FN}=17$
+- **Setup D (ML Prior Alone)**: $\text{TP}=63, \text{FP}=34, \text{TN}=934, \text{FN}=21$
 
 ### 9.4 Ranking Quality: Precision@k Comparison (Setup B vs Setup C)
 
@@ -185,48 +191,97 @@ Evaluating whether the top-$k$ alerts presented to a developer contain genuine v
 | Benchmark Split | Setup | P@10 | P@25 | P@50 | P@100 |
 |---|---|:---:|:---:|:---:|:---:|
 | **Split A Non-Test** ($N=2,236$) | **Setup B (Static PatchPilot)** | 1.000 | 1.000 | 1.000 | **0.960** |
-| **Split A Non-Test** ($N=2,236$) | **Setup C (Full PatchPilot)** | 1.000 | 0.960 | 0.980 | 0.900 |
+| **Split A Non-Test** ($N=2,236$) | **Setup C (Full PatchPilot)** | 1.000 | 1.000 | 0.980 | 0.900 |
 | **Split B Non-Test** ($N=1,052$) | **Setup B (Static PatchPilot)** | 1.000 | 1.000 | 0.900 | 0.450 |
-| **Split B Non-Test** ($N=1,052$) | **Setup C (Full PatchPilot)** | 1.000 | 1.000 | 0.840 | **0.610** |
+| **Split B Non-Test** ($N=1,052$) | **Setup C (Full PatchPilot)** | 1.000 | 1.000 | 0.800 | **0.590** |
 
-### 9.5 Benchmark Visualizations
+### 9.5 Exploratory: Category-Restricted Analysis (Security + Bug Only)
 
-The generated evaluation charts are preserved under `docs/plots/`:
-- **Detection & Ranking Metrics Bar Chart**: [`docs/plots/benchmark_metrics.png`](file:///c:/Users/rajas/OneDrive/Dokumen/Hackathon/docs/plots/benchmark_metrics.png) compares Precision, Recall, F1, and ROC-AUC across all four setups on Split A.
-- **Precision@k Curve**: [`docs/plots/precision_at_k.png`](file:///c:/Users/rajas/OneDrive/Dokumen/Hackathon/docs/plots/precision_at_k.png) tracks top-k alert density comparing Static vs. Full PatchPilot.
+> [!NOTE]
+> **Exploratory, added after reviewing the main results**: The primary results evaluate all findings produced by the analyzers. Because AST complexity rules (`cyclomatic-complexity`, `long-function`, `too-many-args`) and style warnings flag structural characteristics rather than immediate vulnerabilities, this exploratory analysis isolates Setups B and C to only **security** and **bug** category findings. Thresholds were selected on the validation partition only ($B_{\text{sec}}=1.000$, $C_{\text{sec}}=1.271$ on Split A; $B_{\text{sec}}=1.000$, $C_{\text{sec}}=1.140$ on Split B).
 
-### 9.6 Error Analysis
+| Split | Setup | Precision | Recall | F1 Score [95% CI] | FPR (Clean) | ROC-AUC [95% CI] | PR-AUC |
+|---|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Split A Non-Test** | **B. Static (Sec + Bug)** | **0.7717** | 0.7403 | 0.7557 [0.7240, 0.7856] | **0.0657** | 0.8493 [0.8281, 0.8679] | 0.6690 |
+| **Split A Non-Test** | **C. Full (Sec + Bug)** | 0.7495 | **0.7655** | **0.7574 [0.7263, 0.7861]** | 0.0767 | **0.8578 [0.8373, 0.8761]** | **0.7253** |
+| **Split B Non-Test** | **B. Static (Sec + Bug)** | **0.6667** | **0.5476** | **0.6013 [0.5063, 0.6879]** | **0.0238** | 0.7524 [0.6984, 0.8061] | 0.4186 |
+| **Split B Non-Test** | **C. Full (Sec + Bug)** | 0.6571 | **0.5476** | 0.5974 [0.5033, 0.6829] | 0.0248 | **0.7544 [0.7001, 0.8081]** | **0.4682** |
+
+Restricting findings to security and bug categories on Split A reduces the false-positive rate from 49.2% down to 6.6% for Static (F1 rises from 0.510 to 0.756) and from 9.3% to 7.7% for Full PatchPilot (F1 rises from 0.575 to 0.757).
+
+### 9.6 Bandit Sanity-Check & Limitations
+
+We audited Bandit's detections on Split A ($N=2,236$, 516 vulnerable functions, yielding 373 Bandit TPs and 82 Bandit FPs).
+
+#### Top 10 Bandit Rules Triggered
+- **Among True Positives (373 TP functions)**:
+  1. `B110` (try_except_pass): 181
+  2. `B101` (assert_used): 149
+  3. `B108` (hardcoded_tmp_directory): 73
+  4. `B311` (random pseudo-random generator): 49
+  5. `B602` (subprocess_popen_with_shell_equals_true): 47
+  6. `B324` (hashlib insecure md5/sha1): 37
+  7. `B105` (hardcoded_password_string): 22
+  8. `B608` (hardcoded_sql_expressions): 19
+  9. `B104` (hardcoded_bind_all_interfaces): 14
+  10. `B307` (eval): 13
+- **Among False Positives (82 FP functions, 185 rule triggers)**:
+  1. `B608` (hardcoded_sql_expressions): 118
+  2. `B603` (subprocess_without_shell_equals_true): 16
+  3. `B105` (hardcoded_password_string): 11
+  4. `B607` (start_process_with_partial_path): 9
+  5. `B108` (hardcoded_tmp_directory): 6
+  6. `B113` (request_without_timeout): 5
+  7. `B110` (try_except_pass): 5
+  8. `B604` (any_other_function_with_shell_equals_true): 2
+  9. `B602` (subprocess_popen_with_shell_equals_true): 2
+  10. `B321` (ftplib): 1
+
+#### Limitation: Generic Risky-API Presence vs. Actual Vulnerable Change
+Of the 373 Bandit True Positives, **321 (86.1%)** were triggered exclusively by generic risky-API presence (`assert`, bare `except:`, `tempfile`/`/tmp`, pseudo-random calls, or md5/sha1 checksums) rather than the actual vulnerability that was fixed in the source commit. Only 52 TPs (13.9%) flagged a line plausibly connected to the actual security flaw (e.g. `subprocess(shell=True)`, SQL concatenation, or `eval`).
+
+#### 10 Sample Bandit True Positives (Inspected Line Context)
+1. `getPage(**kwargs)`: Flagged by `B110` on line `except:` (generic exception suppression).
+2. `_set_isolation_level(self, isolation_level)`: Flagged by `B101` on line `assert isolation_level in range(1, 5)`.
+3. `get_differing_containers(self)`: Flagged by `B104` on line `expected_bound_ports[container_port] = [{'HostIp': "0.0.0.0", 'HostPort': ""}]`.
+4. `prepare_arguments_for_docker_build_command(self)`: Flagged by `B311` on line `self._opt_arg("UPGRADE_INVALIDATION_STRING", f"{random.randrange(2**32):x}")`.
+5. `munge(self, ds)`: Flagged by `B101` on line `assert isinstance(ds, dict)`.
+6. `_gen_pin_drives(pins)`: Flagged by `B103` on line `os.chmod(tdir, 493)`.
+7. `get(self, path, include_body=True)`: Flagged by `B101` on line `assert self.request.method == "HEAD"`.
+8. `do_REQUEST(self)`: Flagged by `B608` on line `_cursor.execute("SELECT * FROM users WHERE id=%s LIMIT 0, 1" % base64.b64decode("%s===" % self.param))`.
+9. `finish(self, chunk=None)`: Flagged by `B101` on line `assert not self._write_buffer, "Cannot send body with 304"`.
+10. `saveHistory(completion=None)`: Flagged by `B110` on line `except:`.
+
+> [!WARNING]
+> **Bandit Benchmark Limitation**:
+> Bandit's high precision and F1 on PyCode-Vul functions partly reflect the presence of generic risky APIs (e.g., standard assertions, bare exception blocks, `/tmp` strings) in complex functions, rather than precise detection of the specific defect patched in the CVE fix commit.
+
+### 9.7 Error Analysis
 
 #### 5 False Negatives (Missed by All Setups)
-These functions in PyCode-Vul were labeled vulnerable but produced zero findings across AST rules, Bandit, Ruff, and ML risk:
-1. `django/django: alter_db_table(self, model, old_db_table, new_db_table)`: Pure schema migration rename logic; vulnerability stems from database backend table locking behavior rather than an AST or syntactic pattern.
-2. `django/django: alter_db_table(...)` (variant): Missing foreign key constraint preservation during table rename; a relational metadata flaw without syntax smell.
-3. `django/django: supports_transactions(self)`: Database feature detection executing `'CREATE TABLE ROLLBACK_TEST'`; transaction boundary handling issue with no dangerous calls.
-4. `django/django: alter_db_table(...)` (variant): Schema state synchronization bug across distributed migration operations.
-5. `django/django: get_storage_engine(self, cursor, table_name)`: Database engine query logic where the defect is a missing fallback case on specific storage engines.
-
-**Root cause**: Pure semantic/logic flaws, boundary conditions, or backend protocol assumptions do not manifest in AST syntax, cyclomatic complexity, or standard linter rule tables.
+1. `django/django: alter_db_table(self, model, old_db_table, new_db_table)`: Inspected: Database table rename SQL generation/constraint handling in schema backend; logic flaw with no dangerous AST/Bandit API sink.
+2. `django/django: alter_db_table(...)` (variant): Inspected: Database table rename SQL generation/constraint handling in schema backend; logic flaw with no dangerous AST/Bandit API sink.
+3. `django/django: supports_transactions(self)`: Inspected: Transaction capability probe executing table rollback test query; feature detection logic with no dangerous AST/Bandit API sink.
+4. `django/django: alter_db_table(...)` (variant): Inspected: Database table rename SQL generation/constraint handling in schema backend; logic flaw with no dangerous AST/Bandit API sink.
+5. `django/django: get_storage_engine(self, cursor, table_name)`: Inspected: MySQL information_schema table storage engine query; database introspection logic with no dangerous AST/Bandit API sink.
 
 #### 5 False Alarms (Clean Functions Flagged by PatchPilot C)
-These clean functions were flagged as high-risk or violating static rules:
-1. `tornadoweb/tornado: _curl_setup_request(...)`: Flagged for `long-function` (>50 lines) and `cyclomatic-complexity-high` (>15) due to exhaustive libcurl option configuration.
-2. `mlflow/mlflow: run(uri, entry_point, version, ...)`: Flagged for `long-function` and `too-many-args` (>6 parameters) due to legitimate CLI orchestration options.
-3. `saltstack/salt: latest(name, rev, target, runas, ...)`: Flagged for `too-many-args` and `cyclomatic-complexity-high` in a Salt state module handling package revision synchronization.
-4. `ansible/ansible: run(self)`: Flagged for `long-function`, `cyclomatic-complexity-high`, and `deep-nesting` in an Ansible module backend execution loop.
-5. `saltstack/salt: installed(name, version, ...)`: Flagged due to a syntax recovery issue on template placeholders in Salt state definitions.
+1. `tornadoweb/tornado: _curl_setup_request(curl, request, buffer, headers)`: Inspected: Flagged for `long-function` (>50 lines) and `cyclomatic-complexity-high` (>15); exhaustive pycurl option configuration in HTTP client backend.
+2. `saltstack/salt: latest(name, rev=None, target=None, runas=None, ...)`: Inspected: Flagged for `too-many-args` and `cyclomatic-complexity-high`; Git branch/revision synchronization state handler in Salt module.
+3. `ansible/ansible: run(self)`: Inspected: Flagged for `long-function`, `cyclomatic-complexity-high`, and `deep-nesting`; Yum package manager execution loop in Ansible.
+4. `saltstack/salt: installed(name, version=None, ...)`: Inspected: Flagged for `syntax-error`; Jinja/template syntax construct inside snippet causing AST parser recovery.
+5. `sqlmapproject/sqlmap: checkSqlInjection(place, parameter, value)`: Flagged by `syntax-error`; reason not verified.
 
-**Root cause**: Complex, high-parameter orchestration functions in major frameworks naturally exhibit high cyclomatic complexity and argument depth, matching structural code smells without posing security risks.
+### 9.8 Honest Trade-Off Analysis
 
-### 9.7 Honest Trade-Off Analysis
+1. **Bandit vs. PatchPilot**:
+   - Bandit alone achieves higher F1 (0.768 vs. 0.575) and a lower false-positive rate (0.048 vs. 0.093) on Split A non-test functions than full PatchPilot.
+   - PatchPilot's static analyzer detects more total vulnerabilities than Bandit alone (Recall = 0.905 vs. 0.723, recovering 94 vulnerabilities missed by Bandit), but trades precision (0.355 vs. 0.820) and increases the false positive rate to 0.492 under the all-category setup.
+2. **Measured Effect of the ML Risk Prior**:
+   - On Split A, adding the ML risk prior changes the overall ROC-AUC ranking score from 0.761 [0.739, 0.783] (Static) to 0.834 [0.814, 0.853] (Full), and raises PR-AUC from 0.486 to 0.650.
+   - At the validation-calibrated threshold, Full PatchPilot achieves an FPR of 0.093 compared to 0.492 for Static PatchPilot, while recall drops from 0.905 to 0.529.
+3. **Precision@k Ranking**:
+   - On Split A, Static PatchPilot achieved P@100 = 0.960 vs. 0.900 for Full PatchPilot.
+   - On Split B, Full PatchPilot achieved P@100 = 0.590 vs. 0.450 for Static PatchPilot.
 
-1. **Recall vs. Precision**:
-   - Bandit alone achieves high precision (0.820) and a low false positive rate (4.8%), but fails to detect 27.7% of vulnerable functions (Recall = 0.723, missing 143 vulnerabilities).
-   - PatchPilot's static analyzer expands recall to **0.905** (+18.2% more vulnerabilities detected, recovering 94 missed vulnerabilities).
-   - The cost of this expanded recall is a high false positive rate (0.475 on Split A), as architectural complexity rules flag idiomatic complex functions.
-2. **Where the ML Risk Prior Helps**:
-   - The ML risk prior dramatically improves **overall ranking discrimination**: ROC-AUC rises from **0.761 [0.74–0.78]** to **0.832 [0.81–0.85]** on Split A, and from **0.838** to **0.933** on Split B.
-   - Average Precision improves from 0.486 to 0.642 on Split A, and from 0.331 to 0.729 on Split B.
-   - It suppresses false alarms on clean functions, slightly reducing FPR from 0.492 to 0.475 on Split A and from 0.305 to 0.032 on Split B.
-3. **Where the ML Risk Prior Does NOT Beat Static**:
-   - At $k=100$ on Split A, Static PatchPilot has a slightly higher Precision@k (0.960 vs 0.900) than Full PatchPilot. Because the ML prior incorporates security vocabulary weights, clean functions containing security-sensitive keywords can occasionally be promoted into the top 100 ahead of low-severity static smells.
 

@@ -60,18 +60,23 @@ python eval/benchmark.py --split split_a --sample 1000 --seed 42
 
 ## 📈 Key Findings & Honest Trade-offs
 
-1. **Recall vs. Precision**:
-   - **Bandit** has high precision (0.820) and a very low false-positive rate (4.8%), but misses ~28% of real vulnerabilities (Recall: 0.723).
-   - **Static PatchPilot (B)** achieves much higher recall (0.905), catching 90.5% of vulnerabilities. However, broad AST rules and Ruff style checks trigger a 49.2% false-positive rate on clean code, lowering F1 to 0.510.
+1. **Bandit vs. Full PatchPilot**:
+   - On the main benchmark Bandit alone achieves higher F1 (0.768 vs. 0.575) and lower false-positive rate (0.048 vs. 0.093) than full PatchPilot, which trades precision for higher recall.
+   - PatchPilot's static analyzer catches 90.5% of vulnerabilities (recovering 94 missed by Bandit alone), but has a 49.2% false-positive rate on clean code when all complexity and style categories are included.
 2. **Impact of the ML Risk Prior (Setup C vs B)**:
-   - Full PatchPilot **improves overall ranking discrimination** (ROC-AUC increases from 0.761 [0.74-0.78] to 0.832 [0.81-0.85]).
-   - Full PatchPilot slightly improves F1 (0.510 $\to$ 0.519) and precision (0.355 $\to$ 0.364).
-   - **Limitation**: In the top 100 findings (Precision@k), Static PatchPilot ranks slightly sharper than Full PatchPilot on Split A (P@100: 0.960 vs 0.900), because the ML prior occasionally promotes clean functions containing generic security smells. On Split B, Full PatchPilot substantially outperforms Static PatchPilot at P@100 (0.610 vs 0.450).
+   - Full PatchPilot **improves overall ranking discrimination** (ROC-AUC increases from 0.761 [0.739–0.783] to 0.834 [0.814–0.853], PR-AUC rises from 0.486 to 0.650).
+   - On Split B, Full PatchPilot achieves P@100 = 0.590 vs. 0.450 for Static PatchPilot.
+3. **Exploratory Category-Restricted Analysis (Security + Bug Only)**:
+   - Restricting findings to security and bug categories drops the false-positive rate on Split A from 49.2% to 6.6% for Static (F1 = 0.756) and to 7.7% for Full PatchPilot (F1 = 0.757).
+4. **Bandit Sanity Audit**:
+   - 86.1% of Bandit True Positives trigger on generic risky API presence (such as `assert`, bare `except:`, `os.chmod`, `random`, or `/tmp`) rather than the actual line fixed in the vulnerability patch commit.
 
 ---
 
 ## 📁 Artifacts
 
-- `eval/results.json`: Complete machine-readable metrics, confusion matrices, and bootstrap confidence intervals.
-- `docs/plots/benchmark_metrics.png`: Bar chart of F1, Recall, and FPR across Setups A, B, and C.
+- `eval/results.json`: Complete machine-readable metrics, confusion matrices, exploratory category-restricted metrics, Bandit sanity audit, and bootstrap confidence intervals for Split A.
+- `eval/results_split_b.json`: Complete metrics and confidence intervals for Split B.
+- `docs/plots/benchmark_metrics.png`: Bar chart of detection and ranking metrics across setups.
 - `docs/plots/precision_at_k.png`: Precision@k curves comparing ranking quality for B vs C.
+

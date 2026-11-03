@@ -34,20 +34,21 @@ PatchPilot resolves this by fusing deterministic static analysis with intelligen
 
 ## 📊 Benchmark & Empirical Evaluation
 
-To measure whether PatchPilot improves over standalone tools, we evaluated Bandit, static PatchPilot, full PatchPilot (with ML risk prior), and the ML prior alone on the held-out test splits of PyCode-Vul ($N=2,236$ production non-test Python functions, 23.1% positive rate). All decision thresholds were tuned on validation partitions and applied frozen to test sets without LLM calls.
+On the main benchmark Bandit alone achieves higher F1 and lower false-positive rate than full PatchPilot, which trades precision for higher recall; the ML prior improves PatchPilot's ranking (AUC 0.761 to 0.832); Split B is small and supporting only. All decision thresholds were tuned on validation partitions and applied frozen to test sets without LLM calls on production (non-test) Python functions from PyCode-Vul ($N=2,236$; 23.1% positive rate).
 
 | Setup | Precision | Recall | F1 Score [95% CI] | FPR (Clean) | ROC-AUC [95% CI] | Runtime |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
-| **A. Bandit Alone** | **0.820** | 0.723 | **0.768 [0.737, 0.796]** | **0.048** | 0.849 [0.827, 0.869] | 80 ms/func |
-| **B. Static PatchPilot** (AST + Bandit + Ruff) | 0.355 | **0.905** | 0.510 [0.484, 0.537] | 0.492 | 0.761 [0.739, 0.783] | 91 ms/func |
-| **C. Full PatchPilot** (Static + ML Prior) | 0.364 | **0.905** | 0.519 [0.492, 0.546] | 0.475 | **0.832 [0.811, 0.850]** | 100 ms/func |
-| **D. ML Risk Prior Alone** (Reference) | 0.567 | 0.548 | 0.558 [0.518, 0.598] | 0.126 | 0.779 [0.755, 0.804] | **10 ms/func** |
+| **A. Bandit Alone** | **0.820** | 0.723 | **0.768 [0.737, 0.796]** | **0.048** | **0.849 [0.827, 0.869]** | 43 ms/func |
+| **B. Static PatchPilot** (AST + Bandit + Ruff) | 0.355 | **0.905** | 0.510 [0.484, 0.537] | 0.492 | 0.761 [0.739, 0.783] | 55 ms/func |
+| **C. Full PatchPilot** (Static + ML Prior) | 0.630 | 0.529 | 0.575 [0.537, 0.613] | 0.093 | 0.834 [0.814, 0.853] | 60 ms/func |
+| **D. ML Risk Prior Alone** (Reference) | 0.608 | 0.545 | 0.575 [0.536, 0.612] | 0.105 | 0.818 [0.796, 0.840] | **5 ms/func** |
 
 > **Key Trade-Offs & Findings**:
-> - **Recall vs. Precision**: Standalone Bandit achieves high precision (82.0%) and a low false-positive rate (4.8%), but leaves 27.7% of vulnerable functions undetected. PatchPilot's static analyzer expands recall to **90.5%** (+18.2% more vulnerabilities detected), but pays an elevated false-alarm rate (47.5%) due to structural complexity rules flagging large, idiomatic framework functions.
-> - **Ranking Discrimination**: Incorporating the ML risk prior boosts overall ranking discrimination from **0.761 [0.739, 0.783]** to **0.832 [0.811, 0.850]** ROC-AUC and increases PR-AUC from 0.486 to 0.642.
-> - **Supporting Repository-Holdout Split (Split B, $N=1,052$)**: Full PatchPilot achieves ROC-AUC **0.934 [0.908, 0.957]** and F1 0.678 [0.594, 0.759] with an FPR of 3.2%.
-> - **Full Details**: Detailed methodology, error analysis of false alarms and false negatives, and replication commands are documented in [`docs/results.md`](file:///c:/Users/rajas/OneDrive/Dokumen/Hackathon/docs/results.md) and [`eval/README.md`](file:///c:/Users/rajas/OneDrive/Dokumen/Hackathon/eval/README.md).
+> - **Precision vs. Recall Trade-Off**: Bandit alone achieves higher precision (82.0%) and lower false-positive rate (4.8%) than full PatchPilot (precision 63.0%, FPR 9.3%). PatchPilot's static analyzer achieves higher recall (**90.5%** vs. 72.3%, recovering 94 missed vulnerabilities), but has a 49.2% false-positive rate under the all-category setup.
+> - **Ranking Discrimination**: Incorporating the ML risk prior improves overall ranking discrimination from **0.761 [0.739, 0.783]** to **0.834 [0.814, 0.853]** ROC-AUC and increases PR-AUC from 0.486 to 0.650.
+> - **Exploratory Category-Restricted Analysis**: Restricting findings to security and bug categories only (excluding complexity and style) reduces Static FPR to 6.6% (F1 = 0.756) and Full PatchPilot FPR to 7.7% (F1 = 0.757).
+> - **Supporting Repository-Holdout Split (Split B, $N=1,052$)**: Full PatchPilot achieves ROC-AUC **0.928 [0.901, 0.954]** and F1 0.469 [0.399, 0.544] with an FPR of 14.0%; Bandit alone achieves F1 0.672 [0.571, 0.757] with an FPR of 0.7%.
+> - **Full Details**: Detailed methodology, Bandit sanity audit, and replication commands are documented in [`docs/results.md`](file:///c:/Users/rajas/OneDrive/Dokumen/Hackathon/docs/results.md) and [`eval/README.md`](file:///c:/Users/rajas/OneDrive/Dokumen/Hackathon/eval/README.md).
 
 ---
 
