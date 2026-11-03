@@ -346,6 +346,97 @@ def score_setups(
     return scores_a, scores_b, scores_c, scores_d
 
 
+def score_setups_restricted(
+    codes: List[str],
+    bandit_map: Dict[int, List[Finding]],
+    ruff_map: Dict[int, List[Finding]],
+    ast_map: Dict[int, List[Finding]],
+    ml_probs: np.ndarray,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Calculate per-function continuous risk scores restricted to security and bug categories only."""
+    n = len(codes)
+    scores_b = np.zeros(n, dtype=float)
+    scores_c = np.zeros(n, dtype=float)
+
+    for i in range(n):
+        all_static = ast_map.get(i, []) + bandit_map.get(i, []) + ruff_map.get(i, [])
+        sec_bug = [f for f in all_static if f.category in ("security", "bug")]
+        prob_i = float(ml_probs[i])
+
+        if sec_bug:
+            rb = rank_findings(sec_bug, ml_risks={})
+            scores_b[i] = rb[0].score if rb else 0.0
+
+            line_risks = {f.line: prob_i for f in sec_bug}
+            rc = rank_findings(sec_bug, ml_risks=line_risks)
+            scores_c[i] = rc[0].score if rc else 0.0
+
+    return scores_b, scores_c
+
+
+def analyze_bandit_sanity(
+    codes: List[str],
+    bandit_map: Dict[int, List[Finding]],
+    y_test: np.ndarray,
+    seed: int = 42,
+) -> Dict[str, Any]:
+    """Perform sanity check on Bandit's true positives and false positives."""
+    from collections import Counter
+    import random
+
+    tp_rules = Counter()
+    fp_rules = Counter()
+    tp_indices = []
+
+    for i, y in enumerate(y_test):
+        findings = bandit_map.get(i, [])
+        if findings:
+            if y == 1:
+                tp_indices.append(i)
+                for f in findings:
+                    tp_rules[f.rule_id] += 1
+            else:
+                for f in findings:
+                    fp_rules[f.rule_id] += 1
+
+    GENERIC_RISKY_PATTERNS = {"B101", "B110", "B108", "B311", "B324", "B104", "B105", "B603", "B607"}
+    risky_api_count = 0
+    for idx in tp_indices:
+        findings = bandit_map.get(idx, [])
+        if any(f.rule_id in GENERIC_RISKY_PATTERNS for f in findings):
+            risky_api_count += 1
+
+    rng = random.Random(seed)
+    sampled_indices = rng.sample(tp_indices, min(10, len(tp_indices))) if tp_indices else []
+    sample_tps = []
+
+    for idx in sampled_indices:
+        code = codes[idx]
+        lines = code.splitlines()
+        fn_name = lines[0].strip() if lines else "unknown"
+        first_f = bandit_map[idx][0]
+        line_idx = first_f.line - 1
+        flagged_line = lines[line_idx].strip() if 0 <= line_idx < len(lines) else "N/A"
+        sample_tps.append({
+            "index": int(idx),
+            "function": fn_name[:50],
+            "rule_id": first_f.rule_id,
+            "message": first_f.message,
+            "flagged_line": flagged_line[:100],
+        })
+
+    return {
+        "total_bandit_tps": len(tp_indices),
+        "total_bandit_fps": sum(1 for i, y in enumerate(y_test) if y == 0 and len(bandit_map.get(i, [])) > 0),
+        "top_10_tp_rules": tp_rules.most_common(10),
+        "top_10_fp_rules": fp_rules.most_common(10),
+        "generic_risky_api_tp_count": risky_api_count,
+        "generic_risky_api_tp_percentage": round(float(risky_api_count / len(tp_indices) * 100), 1) if tp_indices else 0.0,
+        "sample_10_tps": sample_tps,
+        "limitation_note": "Bandit true positives are predominantly triggered by generic risky API presence (B110 bare except, B101 assert, B108 tempfile, B311 random, B324 hashlib) rather than the actual vulnerable change itself.",
+    }
+
+
 def find_best_threshold(y_val: np.ndarray, val_scores: np.ndarray) -> float:
     """Tune score threshold on validation set to maximize F1 score.
 
@@ -397,12 +488,15 @@ def perform_error_analysis(
         lines = [line.strip() for line in code.splitlines() if line.strip()]
         header = lines[0] if lines else "def function():"
 
-        # Diagnostic reason
-        reason = "Semantic/logic flaw (e.g. auth flow, boundary condition, or state check) with no syntactic static pattern."
-        if "cwe-200" in cwe.lower() or "info" in cwe.lower():
-            reason = "Information exposure or unquoted header not matching standard AST/Bandit injection sinks."
-        elif "cwe-399" in cwe.lower() or "dos" in cwe.lower():
-            reason = "Algorithmic complexity / resource exhaustion without standard vulnerable API calls."
+        # Diagnostic reason: verified inspection vs unverified
+        if repo == "django/django" and "alter_db_table" in header:
+            reason = "Inspected: Database table rename SQL generation/constraint handling in schema backend; logic flaw with no dangerous AST/Bandit API sink."
+        elif repo == "django/django" and "supports_transactions" in header:
+            reason = "Inspected: Transaction capability probe executing table rollback test query; feature detection logic with no dangerous AST/Bandit API sink."
+        elif repo == "django/django" and "get_storage_engine" in header:
+            reason = "Inspected: MySQL information_schema table storage engine query; database introspection logic with no dangerous AST/Bandit API sink."
+        else:
+            reason = "reason not verified"
 
         missed_examples.append({
             "index": int(idx),
@@ -427,7 +521,19 @@ def perform_error_analysis(
         # Check why it was flagged
         ast_f = analyze_ast(code)
         rule_ids = [f.rule_id for f in ast_f]
-        reason = f"Flagged by rule {rule_ids[0] if rule_ids else 'static/Bandit'}; idiomatic usage matches security smell."
+
+        if repo == "tornadoweb/tornado" and "_curl_setup_request" in header:
+            reason = "Inspected: Flagged for long-function (>50 lines) and cyclomatic-complexity-high (>15); exhaustive pycurl option configuration in HTTP client backend."
+        elif repo == "mlflow/mlflow" and "run(" in header:
+            reason = "Inspected: Flagged for long-function and too-many-args (>6 parameters); legitimate CLI entrypoint parameter specification."
+        elif repo == "saltstack/salt" and "latest(" in header:
+            reason = "Inspected: Flagged for too-many-args and cyclomatic-complexity-high; Git branch/revision synchronization state handler in Salt module."
+        elif repo == "ansible/ansible" and "run(self)" in header:
+            reason = "Inspected: Flagged for long-function, cyclomatic-complexity-high, and deep-nesting; Yum package manager execution loop in Ansible."
+        elif repo == "saltstack/salt" and "installed(" in header:
+            reason = "Inspected: Flagged for syntax-error; Jinja/template syntax construct inside snippet causing AST parser recovery."
+        else:
+            reason = f"Flagged by rules {rule_ids[:2]}; reason not verified"
 
         false_alarm_examples.append({
             "index": int(idx),
@@ -579,11 +685,20 @@ def run_benchmark(
     thresh_c = find_best_threshold(y_val, val_s_c)
     thresh_d = find_best_threshold(y_val, val_s_d)
 
+    # Category-restricted validation thresholds (security + bug only)
+    val_sb_sec, val_sc_sec = score_setups_restricted(
+        val_codes, val_b_map, val_r_map, val_ast_map, val_ml_probs
+    )
+    thresh_b_sec = find_best_threshold(y_val, val_sb_sec)
+    thresh_c_sec = find_best_threshold(y_val, val_sc_sec)
+
     print(f"Selected Validation Thresholds (F1-optimal):")
-    print(f"  Setup A (Bandit):           {thresh_a:.3f}")
-    print(f"  Setup B (Static PatchPilot): {thresh_b:.3f}")
-    print(f"  Setup C (Full PatchPilot):   {thresh_c:.3f}")
-    print(f"  Setup D (ML Prior Alone):    {thresh_d:.3f}")
+    print(f"  Setup A (Bandit):                    {thresh_a:.3f}")
+    print(f"  Setup B (Static PatchPilot):         {thresh_b:.3f}")
+    print(f"  Setup C (Full PatchPilot):           {thresh_c:.3f}")
+    print(f"  Setup D (ML Prior Alone):            {thresh_d:.3f}")
+    print(f"  Setup B Restricted (Security + Bug): {thresh_b_sec:.3f}")
+    print(f"  Setup C Restricted (Security + Bug): {thresh_c_sec:.3f}")
 
     # 3. Load Test Set
     print("\n--- STEP 2: Load and Prepare Held-out Test Set ---")
@@ -627,6 +742,11 @@ def run_benchmark(
         eval_codes, b_map, r_map, ast_map, ml_probs
     )
 
+    # Category-restricted scores on test set
+    scores_b_sec, scores_c_sec = score_setups_restricted(
+        eval_codes, b_map, r_map, ast_map, ml_probs
+    )
+
     # Runtime per function estimates
     n_funcs = len(eval_codes)
     ms_a = round(((t_external * 0.95) / n_funcs) * 1000, 2)  # Bandit portion
@@ -656,6 +776,18 @@ def run_benchmark(
     m_c["runtime_ms_per_func"] = ms_c
     m_d["runtime_ms_per_func"] = ms_d
 
+    # Compute category-restricted metrics
+    m_b_sec = compute_metrics(y_test, scores_b_sec, thresh_b_sec)
+    m_c_sec = compute_metrics(y_test, scores_c_sec, thresh_c_sec)
+    ci_b_sec = bootstrap_ci(y_test, scores_b_sec, thresh_b_sec, seed=seed)
+    ci_c_sec = bootstrap_ci(y_test, scores_c_sec, thresh_c_sec, seed=seed)
+    m_b_sec["bootstrap_ci"] = ci_b_sec
+    m_c_sec["bootstrap_ci"] = ci_c_sec
+
+    # Bandit Sanity Check
+    print("Conducting Bandit sanity check on true positives and false positives...")
+    bandit_sanity = analyze_bandit_sanity(eval_codes, b_map, y_test, seed=seed)
+
     # 6. Error Analysis
     print("Conducting error analysis on false negatives and false alarms...")
     fn_samples, fp_samples = perform_error_analysis(
@@ -680,6 +812,12 @@ def run_benchmark(
             "C_full_patchpilot": m_c,
             "D_ml_prior_alone": m_d,
         },
+        "exploratory_category_restricted": {
+            "description": "Exploratory analysis added after reviewing main results. Evaluates Setups B and C counting only security and bug category findings (excluding complexity and style). Thresholds chosen strictly on validation.",
+            "B_static_sec_bug": m_b_sec,
+            "C_full_sec_bug": m_c_sec,
+        },
+        "bandit_sanity_check": bandit_sanity,
         "error_analysis": {
             "missed_vulnerabilities": fn_samples,
             "clean_false_alarms": fp_samples,
@@ -688,7 +826,7 @@ def run_benchmark(
 
     # 7. Print Console Summary
     print("\n" + "=" * 80)
-    print("HONEST BENCHMARK RESULTS SUMMARY")
+    print("HONEST BENCHMARK RESULTS SUMMARY (PRIMARY: ALL CATEGORIES)")
     print("=" * 80)
     print(f"{'Setup':<28} | {'F1 [95% CI]':<19} | {'Recall':<8} | {'Prec':<8} | {'FPR':<8} | {'ROC-AUC [95% CI]':<19} | {'ms/func':<8}")
     print("-" * 115)
@@ -706,6 +844,18 @@ def run_benchmark(
         )
         print(f"{name:<28} | {f1_str:<19} | {m['recall']:<8.3f} | {m['precision']:<8.3f} | {m['fpr']:<8.3f} | {auc_str:<19} | {m['runtime_ms_per_func']:<8.1f}")
     print("-" * 115)
+
+    print("\n--- EXPLORATORY: Category-Restricted Analysis (Security + Bug Only) ---")
+    print(f"{'Setup':<28} | {'F1 [95% CI]':<19} | {'Recall':<8} | {'Prec':<8} | {'FPR':<8} | {'ROC-AUC [95% CI]':<19}")
+    print("-" * 105)
+    for name, m in [
+        ("B. Static (Sec + Bug)", m_b_sec),
+        ("C. Full (Sec + Bug)", m_c_sec),
+    ]:
+        f1_str = f"{m['f1']:.3f} [{m['bootstrap_ci']['f1_ci'][0]:.2f}-{m['bootstrap_ci']['f1_ci'][1]:.2f}]"
+        auc_str = f"{m['roc_auc']:.3f} [{m['bootstrap_ci']['auc_ci'][0]:.2f}-{m['bootstrap_ci']['auc_ci'][1]:.2f}]"
+        print(f"{name:<28} | {f1_str:<19} | {m['recall']:<8.3f} | {m['precision']:<8.3f} | {m['fpr']:<8.3f} | {auc_str:<19}")
+    print("-" * 105)
 
     print("\n--- Precision@k Comparison (Ranking Quality: B vs C) ---")
     print(f"{'Setup':<28} | {'P@10':<8} | {'P@25':<8} | {'P@50':<8} | {'P@100':<8}")
