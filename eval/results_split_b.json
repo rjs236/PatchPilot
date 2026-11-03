@@ -1,0 +1,202 @@
+{
+  "metadata": {
+    "split": "split_b",
+    "sample_size": 1052,
+    "sampling_note": "Full held-out test split of 1052 non-test functions.",
+    "random_seed": 42,
+    "vulnerable_count": 84,
+    "clean_count": 968,
+    "vulnerable_ratio": 0.0798,
+    "threshold_selection": "Chosen strictly on validation split to maximize F1, then applied frozen to test set."
+  },
+  "results": {
+    "A_bandit_alone": {
+      "threshold": 0.1,
+      "precision": 0.8679,
+      "recall": 0.5476,
+      "f1": 0.6715,
+      "fpr": 0.0072,
+      "confusion_matrix": {
+        "tn": 961,
+        "fp": 7,
+        "fn": 38,
+        "tp": 46
+      },
+      "roc_auc": 0.771,
+      "average_precision": 0.5406,
+      "precision_at_k": {
+        "10": 1.0,
+        "25": 1.0,
+        "50": 0.92,
+        "100": 0.84
+      },
+      "bootstrap_ci": {
+        "f1_ci": [
+          0.5714,
+          0.7574
+        ],
+        "auc_ci": [
+          0.7181,
+          0.8235
+        ]
+      },
+      "runtime_ms_per_func": 60.4
+    },
+    "B_static_patchpilot": {
+      "threshold": 1.0,
+      "precision": 0.2112,
+      "recall": 0.9405,
+      "f1": 0.345,
+      "fpr": 0.3048,
+      "confusion_matrix": {
+        "tn": 673,
+        "fp": 295,
+        "fn": 5,
+        "tp": 79
+      },
+      "roc_auc": 0.8376,
+      "average_precision": 0.3314,
+      "precision_at_k": {
+        "10": 1.0,
+        "25": 1.0,
+        "50": 0.9,
+        "100": 0.45
+      },
+      "bootstrap_ci": {
+        "f1_ci": [
+          0.2891,
+          0.3992
+        ],
+        "auc_ci": [
+          0.7969,
+          0.8739
+        ]
+      },
+      "runtime_ms_per_func": 68.39
+    },
+    "C_full_patchpilot": {
+      "threshold": 3.058,
+      "precision": 0.6556,
+      "recall": 0.7024,
+      "f1": 0.6782,
+      "fpr": 0.032,
+      "confusion_matrix": {
+        "tn": 937,
+        "fp": 31,
+        "fn": 25,
+        "tp": 59
+      },
+      "roc_auc": 0.9335,
+      "average_precision": 0.7289,
+      "precision_at_k": {
+        "10": 1.0,
+        "25": 1.0,
+        "50": 0.84,
+        "100": 0.61
+      },
+      "bootstrap_ci": {
+        "f1_ci": [
+          0.5939,
+          0.7587
+        ],
+        "auc_ci": [
+          0.9079,
+          0.9571
+        ]
+      },
+      "runtime_ms_per_func": 72.43
+    },
+    "D_ml_prior_alone": {
+      "threshold": 0.5,
+      "precision": 0.6842,
+      "recall": 0.7738,
+      "f1": 0.7263,
+      "fpr": 0.031,
+      "confusion_matrix": {
+        "tn": 938,
+        "fp": 30,
+        "fn": 19,
+        "tp": 65
+      },
+      "roc_auc": 0.9715,
+      "average_precision": 0.8537,
+      "precision_at_k": {
+        "10": 1.0,
+        "25": 1.0,
+        "50": 0.96,
+        "100": 0.65
+      },
+      "bootstrap_ci": {
+        "f1_ci": [
+          0.6503,
+          0.8
+        ],
+        "auc_ci": [
+          0.9562,
+          0.9856
+        ]
+      },
+      "runtime_ms_per_func": 4.05
+    }
+  },
+  "error_analysis": {
+    "missed_vulnerabilities": [],
+    "clean_false_alarms": [
+      {
+        "index": 99,
+        "repo": "PyCQA/bandit",
+        "header": "def main():",
+        "rules_triggered": [
+          "long-function",
+          "cyclomatic-complexity-high"
+        ],
+        "snippet": "def main():\n# bring our logging stuff up as early as possible\ndebug = (logging.DEBUG if '-d' in sys.argv or '--debug' in sys.argv else\nlogging.INFO)",
+        "reason": "Flagged by rule long-function; idiomatic usage matches security smell."
+      },
+      {
+        "index": 101,
+        "repo": "PyCQA/bandit",
+        "header": "def main():",
+        "rules_triggered": [
+          "long-function",
+          "cyclomatic-complexity-high"
+        ],
+        "snippet": "def main():\n# bring our logging stuff up as early as possible\ndebug = ('-d' in sys.argv or '--debug' in sys.argv)\n_init_logger(debug)",
+        "reason": "Flagged by rule long-function; idiomatic usage matches security smell."
+      },
+      {
+        "index": 105,
+        "repo": "pallets/flask",
+        "header": "def register(self, app: \"Flask\", options: dict) -> None:",
+        "rules_triggered": [
+          "long-function",
+          "cyclomatic-complexity-high"
+        ],
+        "snippet": "def register(self, app: \"Flask\", options: dict) -> None:\n\"\"\"Called by :meth:`Flask.register_blueprint` to register all\nviews and callbacks registered on the blueprint with the\napplication. Creates a :class:`.BlueprintSetupState` and calls",
+        "reason": "Flagged by rule long-function; idiomatic usage matches security smell."
+      },
+      {
+        "index": 216,
+        "repo": "paramiko/paramiko",
+        "header": "def connect(self):",
+        "rules_triggered": [
+          "bare-except"
+        ],
+        "snippet": "def connect(self):\n\"\"\"\nMethod automatically called by the run() method of the AgentProxyThread\n\"\"\"",
+        "reason": "Flagged by rule bare-except; idiomatic usage matches security smell."
+      },
+      {
+        "index": 254,
+        "repo": "paramiko/paramiko",
+        "header": "def _auth(self, username, password, pkey, key_filenames, allow_agent,",
+        "rules_triggered": [
+          "long-function",
+          "too-many-args",
+          "cyclomatic-complexity-high"
+        ],
+        "snippet": "def _auth(self, username, password, pkey, key_filenames, allow_agent,\nlook_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host):\n\"\"\"\nTry, in order:",
+        "reason": "Flagged by rule long-function; idiomatic usage matches security smell."
+      }
+    ]
+  }
+}
