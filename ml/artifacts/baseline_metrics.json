@@ -1,0 +1,125 @@
+{
+  "metadata": {
+    "dataset": "S-AIR-L/PyCode-Vul",
+    "seed": 42,
+    "train_size": 12201,
+    "val_size": 2162,
+    "test_size": 3257,
+    "test_repo_holdout_size": 1630,
+    "feature_dim": 623
+  },
+  "group_split_results": {
+    "majority_class": {
+      "model_name": "Majority Class Baseline",
+      "accuracy": 0.634,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": 0.5,
+      "confusion_matrix": [
+        [
+          2065,
+          0
+        ],
+        [
+          1192,
+          0
+        ]
+      ]
+    },
+    "shuffled_label_control": {
+      "model_name": "Shuffled-Label Control",
+      "accuracy": 0.6116,
+      "precision": 0.4391,
+      "recall": 0.2206,
+      "f1": 0.2937,
+      "roc_auc": 0.4986,
+      "confusion_matrix": [
+        [
+          1729,
+          336
+        ],
+        [
+          929,
+          263
+        ]
+      ]
+    },
+    "logistic_regression": {
+      "model_name": "Logistic Regression",
+      "accuracy": 0.8588,
+      "precision": 0.8519,
+      "recall": 0.7433,
+      "f1": 0.7939,
+      "roc_auc": 0.9009,
+      "confusion_matrix": [
+        [
+          1911,
+          154
+        ],
+        [
+          306,
+          886
+        ]
+      ],
+      "training_time_seconds": 4.29
+    },
+    "gradient_boosting": {
+      "model_name": "HistGradientBoosting",
+      "accuracy": 0.9088,
+      "precision": 0.9435,
+      "recall": 0.7987,
+      "f1": 0.8651,
+      "roc_auc": 0.9704,
+      "confusion_matrix": [
+        [
+          2008,
+          57
+        ],
+        [
+          240,
+          952
+        ]
+      ],
+      "training_time_seconds": 272.25
+    }
+  },
+  "repo_holdout_results": {
+    "logistic_regression": {
+      "model_name": "Logistic Regression (Repo Holdout)",
+      "accuracy": 0.9184,
+      "precision": 0.794,
+      "recall": 0.771,
+      "f1": 0.7823,
+      "roc_auc": 0.9445,
+      "confusion_matrix": [
+        [
+          1258,
+          62
+        ],
+        [
+          71,
+          239
+        ]
+      ]
+    },
+    "gradient_boosting": {
+      "model_name": "HistGradientBoosting (Repo Holdout)",
+      "accuracy": 0.9847,
+      "precision": 0.9412,
+      "recall": 0.9806,
+      "f1": 0.9605,
+      "roc_auc": 0.9966,
+      "confusion_matrix": [
+        [
+          1301,
+          19
+        ],
+        [
+          6,
+          304
+        ]
+      ]
+    }
+  }
+}
