@@ -3,6 +3,8 @@
 import os
 import streamlit as st
 
+from ml.inference import RiskPredictor
+from patchpilot.analyzers.external import _find_tool
 from patchpilot.github_pr import (
     GitHubInvalidURLError,
     GitHubNetworkError,
@@ -124,6 +126,10 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+MAX_GEMINI_CALLS_PER_SESSION = 20
+if "gemini_call_count" not in st.session_state:
+    st.session_state["gemini_call_count"] = 0
+
 # Sidebar Configuration
 st.sidebar.title("⚡ PatchPilot Settings")
 st.sidebar.markdown("Configure analysis, ML risk prior, and AI review layers.")
@@ -143,10 +149,11 @@ use_llm = st.sidebar.checkbox(
 if use_llm:
     api_key_set = bool(os.environ.get("GEMINI_API_KEY"))
     if api_key_set:
-        st.sidebar.success("GEMINI_API_KEY detected in environment.")
+        calls_left = max(0, MAX_GEMINI_CALLS_PER_SESSION - st.session_state["gemini_call_count"])
+        st.sidebar.success(f"GEMINI_API_KEY active ({calls_left} calls remaining this session).")
     else:
-        st.sidebar.warning(
-            "GEMINI_API_KEY not found in environment. Reviews will fall back to static analysis."
+        st.sidebar.info(
+            "GEMINI_API_KEY not configured. Reviews will proceed with static and ML analysis only; AI explanations disabled."
         )
 
 # Optional GitHub Token input in sidebar (never printed or logged)
@@ -156,6 +163,31 @@ gh_token_input = st.sidebar.text_input(
     help="Optional personal access token for higher GitHub API rate limits (5,000/hr vs 60/hr).",
 )
 effective_gh_token = gh_token_input.strip() if gh_token_input else None
+
+# Startup Self-Check & Active Layers
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 🔍 System Health & Layers")
+bandit_found = bool(_find_tool("bandit"))
+ruff_found = bool(_find_tool("ruff"))
+ml_available = RiskPredictor().is_available
+gemini_key_present = bool(os.environ.get("GEMINI_API_KEY"))
+github_token_present = bool(os.environ.get("GITHUB_TOKEN") or effective_gh_token)
+
+st.sidebar.markdown(
+    f"- **AST Analyzer**: 🟢 Active (Built-in)\n"
+    f"- **Bandit**: {'🟢 Available' if bandit_found else '🟡 Fallback Mode'}\n"
+    f"- **Ruff**: {'🟢 Available' if ruff_found else '🟡 Fallback Mode'}\n"
+    f"- **ML Risk Prior**: {'🟢 Model Loaded' if ml_available else '🔴 Unavailable'}\n"
+    f"- **Gemini AI**: {'🟢 Key Configured' if gemini_key_present else '⚪ Disabled (No Key)'}\n"
+    f"- **GitHub API**: {'🟢 Token Configured (5,000/hr)' if github_token_present else '⚪ Unauthenticated (60/hr)'}\n"
+)
+
+st.sidebar.markdown("---")
+st.sidebar.markdown(
+    "🔒 **Privacy Notice**\n\n"
+    "Code submitted to PatchPilot is processed strictly in-memory and is never logged, stored, or retained. "
+    "Gemini API calls (if enabled) are stateless and only inspect prioritized finding context."
+)
 
 st.sidebar.markdown("---")
 st.sidebar.markdown(
@@ -298,9 +330,21 @@ with tab_snippet:
     if st.button("🚀 Analyze Snippet", type="primary", key="btn_run_snippet"):
         if not code_to_review.strip():
             st.warning("Please enter or upload Python code to analyze.")
+        elif len(code_to_review) > 200_000:
+            st.error("❌ Code exceeds maximum limit of 200,000 characters. Please reduce snippet length.")
         else:
+            actual_use_llm = use_llm
+            if use_llm:
+                if not os.environ.get("GEMINI_API_KEY"):
+                    actual_use_llm = False
+                elif st.session_state["gemini_call_count"] >= MAX_GEMINI_CALLS_PER_SESSION:
+                    st.warning(f"⚠️ Session Gemini limit reached ({MAX_GEMINI_CALLS_PER_SESSION} calls). Reviewing with static and ML layers only.")
+                    actual_use_llm = False
+                else:
+                    st.session_state["gemini_call_count"] += 1
+
             with st.spinner("Analyzing code across AST, Bandit, Ruff, and ML layers..."):
-                res = review(code=code_to_review, filename=filename, use_llm=use_llm, use_ml=use_ml)
+                res = review(code=code_to_review, filename=filename, use_llm=actual_use_llm, use_ml=use_ml)
                 st.session_state["snippet_result"] = res
 
     if "snippet_result" in st.session_state:
@@ -365,18 +409,18 @@ with tab_pr:
         key="pr_url_field",
     )
 
-    col_btn_pr, col_btn_demo, _ = st.columns([1.5, 1.8, 3.5])
+    col_btn_pr, col_btn_demo, _ = st.columns([1.5, 2.0, 3.5])
     with col_btn_pr:
         run_pr_clicked = st.button("🚀 Review Pull Request", type="primary", use_container_width=True)
     with col_btn_demo:
-        load_demo_clicked = st.button("📦 Load Demo PR (Offline)", type="secondary", use_container_width=True)
+        load_demo_clicked = st.button("📦 Load Demo PR (Sample Data)", type="secondary", use_container_width=True)
 
     if load_demo_clicked:
         try:
             demo_data = load_demo_pr()
             st.session_state["pr_result"] = demo_data
             st.session_state["pr_is_demo"] = True
-            st.success("Loaded bundled sample pull request: `octocat/demo-repo#42` (100% offline).")
+            st.success("Loaded bundled fictional sample pull request: `octocat/demo-repo#42` (Sample Data, 100% offline).")
         except Exception as exc:
             st.error(f"Failed to load demo PR: {exc}")
 
@@ -384,11 +428,21 @@ with tab_pr:
         if not pr_url_input.strip():
             st.warning("Please provide a valid GitHub Pull Request URL.")
         else:
+            actual_use_llm = use_llm
+            if use_llm:
+                if not os.environ.get("GEMINI_API_KEY"):
+                    actual_use_llm = False
+                elif st.session_state["gemini_call_count"] >= MAX_GEMINI_CALLS_PER_SESSION:
+                    st.warning(f"⚠️ Session Gemini limit reached ({MAX_GEMINI_CALLS_PER_SESSION} calls). Reviewing with static and ML layers only.")
+                    actual_use_llm = False
+                else:
+                    st.session_state["gemini_call_count"] += 1
+
             with st.spinner("Fetching pull request diff and analyzing changed lines..."):
                 try:
                     pr_result = review_pull_request(
                         url=pr_url_input.strip(),
-                        use_llm=use_llm,
+                        use_llm=actual_use_llm,
                         use_ml=use_ml,
                         token=effective_gh_token,
                     )
@@ -417,7 +471,7 @@ with tab_pr:
 
         st.markdown("---")
         if is_demo:
-            st.info("ℹ️ Currently viewing **Offline Demo Mode** (sample pull request with deliberate security flaws).")
+            st.info("ℹ️ Currently viewing **Offline Demo Mode** (fictional sample pull request data with deliberate security flaws).")
 
         # Pull Request Header Information
         st.markdown(f"### 🔀 [{pr_meta.get('title', 'Pull Request')}]({pr_meta.get('html_url', '#')})")

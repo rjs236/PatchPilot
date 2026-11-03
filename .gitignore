@@ -38,8 +38,9 @@ env/
 *.swp
 *.swo
 
-# Testing / coverage
+# Testing / coverage / linting
 .pytest_cache/
+.ruff_cache/
 .coverage
 htmlcov/
 .tox/
