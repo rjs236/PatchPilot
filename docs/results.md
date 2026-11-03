@@ -15,8 +15,7 @@ This document reports the final benchmark evaluations, validation-based feature 
 
 > [!IMPORTANT]
 > **Protocol Note**:
-> In accordance with standard machine learning methodology, the final feature pipeline configuration was chosen **strictly using validation sets** (Split A Val and Split B Val).
-> Test split metrics were evaluated **once** for the chosen configuration after selection. Earlier exploratory comparisons in Phase 3 development were run on test splits and are reported in Section 5 for historical transparency only.
+> Config 2 was chosen a priori to avoid repository memorisation; validation F1 was slightly lower than Config 1 (0.438 vs 0.472 on Split A val, 0.682 vs 0.699 on Split B val), and we report that. Test split metrics were evaluated **once** for the chosen configuration after selection. Earlier exploratory comparisons in Phase 3 development were run on test splits and are reported in Section 5 for historical transparency only.
 
 ### 2.1 Candidate Configurations Evaluated on Validation Sets
 
@@ -35,7 +34,7 @@ Evaluated on non-test functions of the respective validation partitions:
 | **Split B Val ($N=1,616$)** | **Config 2 (Test + Repo tokens excluded)** | 0.8632 | 0.8061 | 0.5910 | 0.6820 | 0.8912 | 0.1026 |
 
 ### 2.3 Selection Decision
-**Config 2** was selected as the frozen production model. While Config 1 shows marginally higher validation recall on training-set distributions, Config 2 guarantees that the model cannot memorize project-specific names (`salt`, `ansible`, `django`), ensuring that predictions rely solely on genuine Python language constructs, AST complexity, and API usage patterns.
+Config 2 was chosen a priori to avoid repository memorisation; validation F1 was slightly lower than Config 1 (0.438 vs 0.472 on Split A val, 0.682 vs 0.699 on Split B val), and we report that. Config 2 guarantees that the model cannot memorize project-specific names (`salt`, `ansible`, `django`), ensuring that predictions rely solely on genuine Python language constructs, AST complexity, and API usage patterns.
 
 ---
 

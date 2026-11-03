@@ -62,7 +62,7 @@ def enrich(code: str, findings: List[Finding]) -> List[Finding]:
         "You are an expert Python security and code quality reviewer. "
         "Review the provided code and findings. For each finding, provide:\n"
         "1. 'explanation': A concise, plain English explanation of the root cause, risk, and impact.\n"
-        "2. 'suggested_fix': A minimal, production-ready replacement code snippet or clean pattern to fix it.\n"
+        "2. 'suggested_fix': A minimal replacement code snippet or clean pattern to fix it.\n"
         "Return ONLY a valid JSON object matching this schema:\n"
         "{\n"
         '  "enrichments": [\n'

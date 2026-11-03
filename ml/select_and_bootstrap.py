@@ -281,7 +281,7 @@ def main():
             "split_b_val_config1_test_tokens_only": m_va_b_c1,
             "split_b_val_config2_test_and_repo_tokens": m_va_b_c2,
             "chosen_config": "config2_test_and_repo_tokens_no_num_asserts",
-            "selection_rationale": "Chosen strictly based on validation metrics and cross-project generalization on val splits",
+            "selection_rationale": "Config 2 was chosen a priori to avoid repository memorisation; validation F1 was slightly lower than Config 1 (0.438 vs 0.472 on Split A val, 0.682 vs 0.699 on Split B val), and we report that.",
         },
         "test_metrics_chosen_config": {
             "split_a_non_test": m_te_a_c2,
