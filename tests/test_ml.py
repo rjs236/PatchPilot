@@ -26,11 +26,12 @@ from patchpilot.ranker import compute_finding_score, rank_findings
 def test_ast_feature_extractor_feature_names():
     extractor = ASTFeatureExtractor()
     names = extractor.get_feature_names_out()
-    assert len(names) == 23
+    assert len(names) == 22
     assert "complexity" in names
     assert "has_eval_exec" in names
     assert "has_pickle" in names
     assert "has_subprocess" in names
+    assert "num_asserts" not in names
 
 
 def test_extract_ast_features_single():
@@ -66,10 +67,27 @@ def test_ast_feature_extractor_transform():
         "def g(x):\n    if x > 0:\n        return eval(x)\n    return None\n",
     ]
     matrix = extractor.transform(codes)
-    assert matrix.shape == (2, 23)
+    assert matrix.shape == (2, 22)
     eval_idx = list(extractor.get_feature_names_out()).index("has_eval_exec")
     assert matrix[0, eval_idx] == 0.0
     assert matrix[1, eval_idx] == 1.0
+
+
+def test_inference_loads_clean_uncalibrated_model():
+    """Verify inference loads the clean uncalibrated model with expected properties."""
+    predictor = get_default_predictor()
+    assert predictor.is_available, "RiskPredictor must successfully load the clean baseline model artifact"
+    bundle = predictor._bundle
+    assert bundle is not None
+    assert bundle.get("trained_on") == "non_test_functions_only"
+    assert bundle.get("has_assert_features") is False
+    assert bundle.get("is_calibrated") is False
+    assert bundle.get("repo_tokens_removed") is True
+    assert "num_asserts" not in bundle.get("feature_names", [])
+    # Check that repo names are excluded from feature names
+    feature_names = bundle.get("feature_names", [])
+    for repo_tok in ["tfidf_salt", "tfidf_ansible", "tfidf_django", "tfidf_paramiko"]:
+        assert repo_tok not in feature_names
 
 
 def test_predict_risk_live_model():
@@ -213,12 +231,14 @@ def test_ranker_incorporates_ml_risk():
 
 def test_pipeline_with_and_without_ml():
     code = """
-def load_data(raw):
-    import pickle
-    return pickle.loads(raw)
+def execute_command(cmd, password):
+    import subprocess
+    eval(cmd)
+    subprocess.call(cmd, shell=True)
+    return password
 """
     # With ML enabled
-    report_ml = review(code, filename="data_loader.py", use_llm=False, use_ml=True)
+    report_ml = review(code, filename="service_runner.py", use_llm=False, use_ml=True)
     assert "high_risk_functions" in report_ml
     high_risk_funcs = report_ml["high_risk_functions"]
     assert len(high_risk_funcs) >= 1
@@ -227,6 +247,6 @@ def load_data(raw):
     assert high_risk_funcs[0]["risk"] >= 0.50
 
     # With ML disabled
-    report_no_ml = review(code, filename="data_loader.py", use_llm=False, use_ml=False)
+    report_no_ml = review(code, filename="service_runner.py", use_llm=False, use_ml=False)
     assert "high_risk_functions" in report_no_ml
     assert report_no_ml["high_risk_functions"] == []

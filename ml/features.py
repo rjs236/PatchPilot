@@ -63,7 +63,6 @@ def extract_ast_features_single(code: str) -> Dict[str, float]:
         "num_compares": 0.0,
         "num_bool_ops": 0.0,
         "num_raises": 0.0,
-        "num_asserts": 0.0,
         "has_eval_exec": 0.0,
         "has_subprocess": 0.0,
         "has_pickle": 0.0,
@@ -147,8 +146,6 @@ def extract_ast_features_single(code: str) -> Dict[str, float]:
             complexity += len(node.values) - 1
         elif isinstance(node, ast.Raise):
             feats["num_raises"] += 1
-        elif isinstance(node, ast.Assert):
-            feats["num_asserts"] += 1
 
     feats["complexity"] = float(complexity)
     feats["risky_api_count"] = float(risky_calls)
@@ -186,9 +183,54 @@ class ASTFeatureExtractor(BaseEstimator, TransformerMixin):
         return np.array(self.feature_names_)
 
 
-def build_feature_pipeline(max_tfidf_features: int = 500) -> Pipeline:
+TEST_AND_REPO_STOP_WORDS = {
+    # Test identifiers
+    "test",
+    "tests",
+    "assert",
+    "asserts",
+    "mock",
+    "mocks",
+    "fixture",
+    "fixtures",
+    "pytest",
+    "unittest",
+    "patch",
+    "patcher",
+    "fake",
+    # Repository identifiers
+    "salt",
+    "saltstack",
+    "ansible",
+    "mlflow",
+    "mlflowexception",
+    "django",
+    "tornado",
+    "tornadoweb",
+    "paramiko",
+    "airflow",
+    "w3af",
+    "sqlmap",
+    "sqlmapproject",
+    "jupyter",
+    "volatility",
+    "volatilityfoundation",
+    "pycqa",
+    "bandit",
+    "pyyaml",
+    "requests",
+    "flask",
+    "pallets",
+}
+
+
+def build_feature_pipeline(
+    max_tfidf_features: int = 500,
+    filter_test_and_repo_tokens: bool = True,
+) -> Pipeline:
     """Build a combined AST + TF-IDF feature pipeline."""
     ast_pipe = Pipeline([("ast", ASTFeatureExtractor())])
+    stop_words = sorted(list(TEST_AND_REPO_STOP_WORDS)) if filter_test_and_repo_tokens else None
     tfidf_pipe = Pipeline(
         [
             (
@@ -198,6 +240,7 @@ def build_feature_pipeline(max_tfidf_features: int = 500) -> Pipeline:
                     max_features=max_tfidf_features,
                     min_df=3,
                     sublinear_tf=True,
+                    stop_words=stop_words,
                 ),
             )
         ]

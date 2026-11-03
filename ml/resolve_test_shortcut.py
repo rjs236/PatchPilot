@@ -60,8 +60,6 @@ TEST_IDENTIFIER_STOP_WORDS = {
 }
 
 
-from ml.models import CalibratedModelWrapper
-
 
 def is_test_function(code: str, file_path: str = "") -> bool:
     """Classify whether a given function or snippet is a test function."""

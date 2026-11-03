@@ -13,4 +13,4 @@ In accordance with hackathon rules and transparency guidelines, this document lo
 ## Human Oversight & Code Integrity
 - All AST rules, McCabe complexity calculations, and scoring ranking logic are deterministically implemented and verified with exhaustive automated unit tests.
 - Gemini LLM generation is isolated as an enrichment layer, designed with graceful fallback so failure or lack of an API key never degrades core code review functionality.
-- Machine learning risk predictions are calibrated probabilities ($0.0 \dots 1.0$) that modulate ranking rather than emitting standalone alerts, backed by leak-proof group-aware splits and sanity controls.
+- Machine learning risk predictions are estimated risk probabilities ($0.0 \dots 1.0$) that modulate ranking rather than emitting standalone alerts, backed by leak-proof group-aware splits and sanity controls.

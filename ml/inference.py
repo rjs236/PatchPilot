@@ -7,8 +7,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import joblib
 
-from ml.models import CalibratedModelWrapper
-
 _LOADED_MODEL_BUNDLE: Optional[Dict[str, Any]] = None
 _MODEL_TYPE: Optional[str] = None
 

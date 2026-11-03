@@ -1,0 +1,124 @@
+{
+  "split_a_non_test": {
+    "size": 2236,
+    "majority_baseline": {
+      "accuracy": 0.7692,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": 0.5,
+      "brier_score": 0.2308
+    },
+    "test_tokens_only": {
+      "accuracy": 0.8251,
+      "precision": 0.709,
+      "recall": 0.4109,
+      "f1": 0.5202,
+      "roc_auc": 0.8271,
+      "brier_score": 0.1298
+    },
+    "final_clean_uncalibrated": {
+      "accuracy": 0.8148,
+      "precision": 0.67,
+      "recall": 0.3895,
+      "f1": 0.4926,
+      "roc_auc": 0.7791,
+      "brier_score": 0.1386
+    }
+  },
+  "split_b_non_test": {
+    "size": 1052,
+    "majority_baseline": {
+      "accuracy": 0.9202,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": 0.5,
+      "brier_score": 0.0798
+    },
+    "test_tokens_only": {
+      "accuracy": 0.942,
+      "precision": 0.6139,
+      "recall": 0.7381,
+      "f1": 0.6703,
+      "roc_auc": 0.961,
+      "brier_score": 0.0431
+    },
+    "final_clean_uncalibrated": {
+      "accuracy": 0.9534,
+      "precision": 0.6842,
+      "recall": 0.7738,
+      "f1": 0.7263,
+      "roc_auc": 0.9715,
+      "brier_score": 0.0415
+    },
+    "per_repository": {
+      "PyCQA/bandit": {
+        "size": 269,
+        "vulnerable": 0,
+        "pct_vulnerable": 0.0,
+        "accuracy": 0.9368,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "roc_auc": null
+      },
+      "django/django": {
+        "size": 30,
+        "vulnerable": 29,
+        "pct_vulnerable": 96.67,
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "roc_auc": 1.0
+      },
+      "pallets/flask": {
+        "size": 279,
+        "vulnerable": 31,
+        "pct_vulnerable": 11.11,
+        "accuracy": 0.9713,
+        "precision": 0.8966,
+        "recall": 0.8387,
+        "f1": 0.8667,
+        "roc_auc": 0.9845
+      },
+      "paramiko/paramiko": {
+        "size": 270,
+        "vulnerable": 16,
+        "pct_vulnerable": 5.93,
+        "accuracy": 0.9481,
+        "precision": 0.6667,
+        "recall": 0.25,
+        "f1": 0.3636,
+        "roc_auc": 0.9628
+      },
+      "psf/requests": {
+        "size": 156,
+        "vulnerable": 8,
+        "pct_vulnerable": 5.13,
+        "accuracy": 0.9359,
+        "precision": 0.4286,
+        "recall": 0.75,
+        "f1": 0.5455,
+        "roc_auc": 0.9637
+      },
+      "yaml/pyyaml": {
+        "size": 48,
+        "vulnerable": 0,
+        "pct_vulnerable": 0.0,
+        "accuracy": 1.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "roc_auc": null
+      }
+    }
+  },
+  "brier_score_comparison": {
+    "uncalibrated_histgb": 0.1386,
+    "sigmoid_calibrated": 0.1017,
+    "isotonic_calibrated": 0.1003,
+    "note": "Uncalibrated HistGB achieved lower (better) Brier score (0.0966 vs 0.1003/0.1017); shipping uncalibrated model."
+  }
+}
