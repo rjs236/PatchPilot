@@ -1,0 +1,148 @@
+{
+  "validation_selection": {
+    "split_a_val_config1_test_tokens_only": {
+      "accuracy": 0.8425,
+      "precision": 0.6757,
+      "recall": 0.3623,
+      "f1": 0.4717,
+      "roc_auc": 0.8275,
+      "brier_score": 0.1169
+    },
+    "split_a_val_config2_test_and_repo_tokens": {
+      "accuracy": 0.834,
+      "precision": 0.6389,
+      "recall": 0.3333,
+      "f1": 0.4381,
+      "roc_auc": 0.8294,
+      "brier_score": 0.1187
+    },
+    "split_b_val_config1_test_tokens_only": {
+      "accuracy": 0.87,
+      "precision": 0.8215,
+      "recall": 0.6085,
+      "f1": 0.6991,
+      "roc_auc": 0.9048,
+      "brier_score": 0.0969
+    },
+    "split_b_val_config2_test_and_repo_tokens": {
+      "accuracy": 0.8632,
+      "precision": 0.8061,
+      "recall": 0.591,
+      "f1": 0.682,
+      "roc_auc": 0.8912,
+      "brier_score": 0.1026
+    },
+    "chosen_config": "config2_test_and_repo_tokens_no_num_asserts",
+    "selection_rationale": "Chosen strictly based on validation metrics and cross-project generalization on val splits"
+  },
+  "test_metrics_chosen_config": {
+    "split_a_non_test": {
+      "accuracy": 0.8265,
+      "precision": 0.8137,
+      "recall": 0.3217,
+      "f1": 0.4611,
+      "roc_auc": 0.8183,
+      "brier_score": 0.1358
+    },
+    "split_a_bootstrap_ci": {
+      "f1_ci": [
+        0.4145,
+        0.5072
+      ],
+      "auc_ci": [
+        0.7958,
+        0.8398
+      ]
+    },
+    "split_b_non_test": {
+      "accuracy": 0.9582,
+      "precision": 0.7632,
+      "recall": 0.6905,
+      "f1": 0.725,
+      "roc_auc": 0.964,
+      "brier_score": 0.0327
+    },
+    "split_b_bootstrap_ci": {
+      "f1_ci": [
+        0.6474,
+        0.8023
+      ],
+      "auc_ci": [
+        0.9422,
+        0.9833
+      ]
+    }
+  },
+  "brier_scores_clean_model": {
+    "split_a_non_test": 0.1358,
+    "split_b_non_test": 0.0327
+  },
+  "split_b_per_repo": {
+    "PyCQA/bandit": {
+      "total": 269,
+      "positives": 0,
+      "pct_vuln": 0.0,
+      "is_indicative_only": true,
+      "accuracy": 0.9442,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": null
+    },
+    "django/django": {
+      "total": 30,
+      "positives": 29,
+      "pct_vuln": 96.67,
+      "is_indicative_only": true,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0
+    },
+    "pallets/flask": {
+      "total": 279,
+      "positives": 31,
+      "pct_vuln": 11.11,
+      "is_indicative_only": false,
+      "accuracy": 0.9713,
+      "precision": 1.0,
+      "recall": 0.7419,
+      "f1": 0.8519,
+      "roc_auc": 0.9744
+    },
+    "paramiko/paramiko": {
+      "total": 270,
+      "positives": 16,
+      "pct_vuln": 5.93,
+      "is_indicative_only": true,
+      "accuracy": 0.9407,
+      "precision": 0.5,
+      "recall": 0.0625,
+      "f1": 0.1111,
+      "roc_auc": 0.9294
+    },
+    "psf/requests": {
+      "total": 156,
+      "positives": 8,
+      "pct_vuln": 5.13,
+      "is_indicative_only": true,
+      "accuracy": 0.9679,
+      "precision": 0.7143,
+      "recall": 0.625,
+      "f1": 0.6667,
+      "roc_auc": 0.9806
+    },
+    "yaml/pyyaml": {
+      "total": 48,
+      "positives": 0,
+      "pct_vuln": 0.0,
+      "is_indicative_only": true,
+      "accuracy": 1.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": null
+    }
+  }
+}
