@@ -11,8 +11,14 @@ Workflow:
 """
 
 import json
+import sys
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
+
+# Ensure project root is in sys.path
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
 
 import joblib
 import numpy as np
@@ -299,6 +305,27 @@ def main():
     with open("ml/artifacts/final_frozen_metrics.json", "w") as f:
         json.dump(output, f, indent=2)
     print("\nSaved final frozen metrics to ml/artifacts/final_frozen_metrics.json")
+
+    # Save frozen clean model bundle
+    ast_names = list(pipe_c2.named_steps["union"].transformer_list[0][1].named_steps["ast"].get_feature_names_out())
+    tfidf_names = list(pipe_c2.named_steps["union"].transformer_list[1][1].named_steps["tfidf"].get_feature_names_out())
+    feature_names = ast_names + [f"tfidf_{w}" for w in tfidf_names]
+
+    clean_bundle = {
+        "feature_pipeline": pipe_c2,
+        "classifier": clf_c2_a,
+        "is_dense": True,
+        "is_calibrated": False,
+        "trained_on": "non_test_functions_only",
+        "has_assert_features": False,
+        "repo_tokens_removed": True,
+        "random_seed": RANDOM_SEED,
+        "feature_names": feature_names,
+    }
+
+    joblib.dump(clean_bundle, "ml/artifacts/baseline_model_clean.joblib")
+    joblib.dump(clean_bundle, "ml/artifacts/baseline_model.joblib")
+    print("Saved frozen clean model to ml/artifacts/baseline_model.joblib and baseline_model_clean.joblib")
 
 
 if __name__ == "__main__":
