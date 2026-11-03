@@ -15,12 +15,12 @@ This guide provides step-by-step instructions for deploying PatchPilot to **Hugg
   - `bandit` and `ruff` are listed in `requirements.txt` and installed into the environment at build time.
 - **Secrets Management:**
   - `GEMINI_API_KEY` and `GITHUB_TOKEN` are read strictly from platform secrets or environment variables.
-  - Zero-key fallback: With zero secrets configured, AST checks, Bandit, Ruff, the ML risk model, and offline demo PR review remain 100% operational.
+  - Zero-key fallback: With zero secrets configured, AST checks, Bandit, Ruff, the ML risk model, and offline demo PR review remain fully operational locally.
 - **Safety Limits & Privacy:**
   - 200,000 character maximum input cap.
-  - Subprocess timeouts (5 seconds max for Bandit and Ruff).
+  - Subprocess timeouts: Default 10-second timeout per file for Bandit and Ruff ensures large files (tested up to 2,000 lines) complete without timing out. If a timeout occurs, a friendly warning finding is displayed rather than silently returning empty results. (The frozen benchmark runner uses its own separate directory-batch timeouts of 300s/120s).
   - Session quota limit: Max 20 Gemini calls per user session.
-  - Zero persistence: Submitted code is analyzed in-memory and discarded immediately. No code is stored, cached, or logged.
+  - Privacy disclosure: Code is analysed in temporary files that are deleted immediately and PatchPilot does not store it. If you enable LLM explanations, the code and findings are sent to Google's Gemini API, so do not use private code without permission.
 
 ---
 

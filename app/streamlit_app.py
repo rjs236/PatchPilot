@@ -185,8 +185,8 @@ st.sidebar.markdown(
 st.sidebar.markdown("---")
 st.sidebar.markdown(
     "🔒 **Privacy Notice**\n\n"
-    "Code submitted to PatchPilot is processed strictly in-memory and is never logged, stored, or retained. "
-    "Gemini API calls (if enabled) are stateless and only inspect prioritized finding context."
+    "Code is analysed in temporary files that are deleted immediately and PatchPilot does not store it. "
+    "If you enable LLM explanations, the code and findings are sent to Google's Gemini API, so do not use private code without permission."
 )
 
 st.sidebar.markdown("---")

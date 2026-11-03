@@ -42,7 +42,7 @@
     4. Excluded unparseable sensitivity table & analysis
     5. Exploratory security-and-bug-only table
     6. Test-function discovery and fix documentation
-  - [ ] Responsible use & limitations clearly outlined (in-memory processing, human-in-the-loop validation).
+  - [ ] Responsible use & limitations clearly outlined (temporary files privacy, human-in-the-loop validation).
   - [ ] AI tools disclosure documented (Google Antigravity agent, Google Gemini 2.5).
 - [ ] **Screenshots & Visuals:**
   - [ ] Capture and place `docs/screenshots/ui_overview.png` (Streamlit main interface).
