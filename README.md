@@ -90,13 +90,13 @@ flowchart TD
 
 ### Application Screenshots
 
+| Main Dashboard |
+|:---:|
+| ![Main Dashboard](docs/screenshots/main_dashboard.png)<br>*(Caption: PatchPilot dashboard with the settings sidebar, system health check, and review summary)* |
+
 | Interactive Snippet Review | GitHub PR Review (Diff-Filtered) |
 |:---:|:---:|
 | ![Dashboard Snippet Review](docs/screenshots/dashboard_snippet_review.png)<br>*(Caption: Interactive snippet review showing security findings, risk scores, and Gemini AI root-cause analysis)* | ![Dashboard PR Review](docs/screenshots/dashboard_pr_review.png)<br>*(Caption: GitHub PR review mode displaying diff-filtered alerts on modified lines and hidden pre-existing issues count)* |
-
-| Collapsed Maintainability Tier | Animated Demo Walkthrough |
-|:---:|:---:|
-| ![Maintainability Collapsed](docs/screenshots/maintainability_collapsed.png)<br>*(Caption: Collapsible maintainability expander separating complexity/style smells from security defects)* | ![PatchPilot Demo Walkthrough](docs/screenshots/patchpilot_demo.gif)<br>*(Caption: Animated walkthrough: analyzing a Python vulnerability and loading the offline demo PR)* |
 
 ---
 
@@ -286,9 +286,8 @@ PatchPilot/
 ├── docs/                         # Documentation & submission artifacts
 │   ├── AI_TOOLS.md               # AI tools disclosure log
 │   ├── ARCHITECTURE.md           # System design & scoring specification
-│   ├── DEMO_SCRIPT.md            # 2:30 video walkthrough script
 │   ├── results.md                # In-depth benchmark results & sensitivity
-│   ├── screenshots/              # UI demo screenshots & GIF
+│   ├── screenshots/              # UI demo screenshots 
 │   └── SUBMISSION_CHECKLIST.md   # Pre-deadline verification checklist
 ├── tests/                        # 82 automated unit & integration tests
 ├── .env.example                  # Environment configuration template
