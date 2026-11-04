@@ -120,7 +120,7 @@ flowchart TD
 ### 2. Clone and Setup Environment
 ```bash
 # Clone the repository
-git clone https://github.com/[YOUR-USERNAME]/PatchPilot.git
+git clone https://github.com/rjs236/PatchPilot.git
 cd PatchPilot
 
 # Create a virtual environment
@@ -318,9 +318,9 @@ In accordance with Neural Storm 2026 hackathon guidelines, all AI assistance is 
 
 ## 👥 Team
 
-- **Team Name**: `[TEAM NAME]`
+- **Team Name**: `rps`
 - **Members**:
-  - `[MEMBER NAMES]`
+  - `RAJASRI A; CHEERLA PRANEETHA; MADHIRA SRAVANTHI`
 
 ---
 
