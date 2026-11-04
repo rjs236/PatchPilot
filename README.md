@@ -98,6 +98,10 @@ flowchart TD
 |:---:|:---:|
 | ![Dashboard Snippet Review](docs/screenshots/dashboard_snippet_review.png)<br>*(Caption: Interactive snippet review showing security findings, risk scores, and Gemini AI root-cause analysis)* | ![Dashboard PR Review](docs/screenshots/dashboard_pr_review.png)<br>*(Caption: GitHub PR review mode displaying diff-filtered alerts on modified lines and hidden pre-existing issues count)* |
 
+| Collapsed Maintainability Tier |
+|:---:|:---:|
+| ![Maintainability Collapsed](docs/screenshots/maintainability_collapsed.png)<br>*(Caption: Collapsible maintainability expander separating complexity/style smells from security defects)* | 
+
 ---
 
 ## 🛠️ Tech Stack & Libraries
