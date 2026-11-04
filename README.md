@@ -146,7 +146,7 @@ cp .env.example .env
 Configure your keys in `.env`:
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
-GEMINI_MODEL=gemini-3.8-flash
+GEMINI_MODEL=gemini-2.5-flash
 
 # Optional: Raises GitHub API rate limits from 60 req/hr to 5,000 req/hr
 # GITHUB_TOKEN=your_personal_access_token_here
