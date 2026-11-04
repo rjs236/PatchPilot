@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 import textwrap
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from ml.inference import map_function_risks_to_lines, predict_risk
 from patchpilot.analyzers.ast_analyzer import analyze_ast
@@ -21,6 +21,7 @@ def review(
     filename: str = "snippet.py",
     use_llm: bool = False,
     use_ml: bool = True,
+    on_llm_retry: Optional[Callable[[int, float], Any]] = None,
 ) -> Dict[str, Any]:
     """Execute the multi-layered review pipeline on Python code.
 
@@ -62,7 +63,10 @@ def review(
 
     # 4. LLM Enrichment Layer
     if use_llm and ranked:
-        ranked = enrich(code, ranked)
+        if on_llm_retry is not None:
+            ranked = enrich(code, ranked, on_retry=on_llm_retry)
+        else:
+            ranked = enrich(code, ranked)
 
     # Compute severity summary
     summary = {
@@ -86,6 +90,7 @@ def review_pull_request(
     use_llm: bool = False,
     use_ml: bool = True,
     token: Optional[str] = None,
+    on_llm_retry: Optional[Callable[[int, float], Any]] = None,
 ) -> Dict[str, Any]:
     """Execute end-to-end pull request review on changed Python files.
 
@@ -134,7 +139,10 @@ def review_pull_request(
 
         # 5. LLM Enrichment Layer (capped per PR for performance)
         if use_llm and diff_findings and llm_files_enriched < MAX_LLM_FILES_PER_PR:
-            diff_findings = enrich(code, diff_findings)
+            if on_llm_retry is not None:
+                diff_findings = enrich(code, diff_findings, on_retry=on_llm_retry)
+            else:
+                diff_findings = enrich(code, diff_findings)
             llm_files_enriched += 1
 
         file_summary = {

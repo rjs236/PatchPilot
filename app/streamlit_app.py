@@ -200,8 +200,25 @@ st.sidebar.markdown(
     "- Layer 3: Google Gemini LLM Explanations\n"
 )
 
+DEMO_EXPLANATION_LABEL = "Pre-generated sample explanation (not a live Gemini call)"
+GEMINI_BUSY_WARNING = (
+    "Gemini explanations unavailable right now (model busy). "
+    "Showing static + ML results. Try again in a minute."
+)
+
+
+def on_gemini_retry(attempt: int, delay: float):
+    """Context manager or callable displaying a spinner during Gemini busy retries."""
+    return st.spinner("Waiting for Gemini (model is busy)...")
+
+
 # Helper finding renderers
-def render_finding_card(idx: int, f: dict, default_expanded: bool = False) -> None:
+def render_finding_card(
+    idx: int,
+    f: dict,
+    default_expanded: bool = False,
+    is_demo: bool = False,
+) -> None:
     sev = f.get("severity", "low").lower()
     badge_class = f"badge-{sev}"
     cat = f.get("category", "general")
@@ -243,6 +260,8 @@ def render_finding_card(idx: int, f: dict, default_expanded: bool = False) -> No
 
         if explanation:
             st.markdown("#### 💡 AI Root-Cause & Risk Analysis")
+            if is_demo or f.get("pre_generated") or extra.get("pre_generated"):
+                st.info(f"ℹ️ **{DEMO_EXPLANATION_LABEL}**")
             st.markdown(explanation)
 
         if suggested_fix:
@@ -250,7 +269,7 @@ def render_finding_card(idx: int, f: dict, default_expanded: bool = False) -> No
             st.code(suggested_fix, language="python")
 
 
-def render_findings_grouped(findings: list) -> None:
+def render_findings_grouped(findings: list, is_demo: bool = False) -> None:
     """Renders findings with Security & Bug shown by default, and Complexity & Style collapsed in Maintainability."""
     if not findings:
         st.success("🎉 No issues detected! The submitted code passed all static and quality checks.")
@@ -268,7 +287,7 @@ def render_findings_grouped(findings: list) -> None:
     if sec_and_bug:
         st.markdown(f"##### 🛡️ Security & Bug Findings ({len(sec_and_bug)})")
         for idx, f in enumerate(sec_and_bug, start=1):
-            render_finding_card(idx, f, default_expanded=(idx <= 3))
+            render_finding_card(idx, f, default_expanded=(idx <= 3), is_demo=is_demo)
     else:
         st.info("✅ No Security or Bug findings detected.")
 
@@ -278,7 +297,7 @@ def render_findings_grouped(findings: list) -> None:
         with st.expander(m_title, expanded=False):
             st.caption("Architectural complexity and stylistic code smells (collapsed by default).")
             for idx, f in enumerate(maintainability, start=len(sec_and_bug) + 1):
-                render_finding_card(idx, f, default_expanded=False)
+                render_finding_card(idx, f, default_expanded=False, is_demo=is_demo)
 
 
 # Main Application Tabs
@@ -343,18 +362,38 @@ with tab_snippet:
                 elif st.session_state["gemini_call_count"] >= MAX_GEMINI_CALLS_PER_SESSION:
                     st.warning(f"⚠️ Session Gemini limit reached ({MAX_GEMINI_CALLS_PER_SESSION} calls). Reviewing with static and ML layers only.")
                     actual_use_llm = False
-                else:
-                    st.session_state["gemini_call_count"] += 1
 
             with st.spinner("Analyzing code across AST, Bandit, Ruff, and ML layers..."):
-                res = review(code=code_to_review, filename=filename, use_llm=actual_use_llm, use_ml=use_ml)
+                res = review(
+                    code=code_to_review,
+                    filename=filename,
+                    use_llm=actual_use_llm,
+                    use_ml=use_ml,
+                    on_llm_retry=on_gemini_retry,
+                )
                 st.session_state["snippet_result"] = res
+
+            if actual_use_llm:
+                has_llm_err = any("llm_error" in f.get("extra", {}) for f in res.get("findings", []))
+                if has_llm_err:
+                    st.session_state["snippet_llm_error"] = True
+                else:
+                    st.session_state["snippet_llm_error"] = False
+                    if res.get("findings"):
+                        st.session_state["gemini_call_count"] += 1
+            else:
+                st.session_state["snippet_llm_error"] = False
 
     if "snippet_result" in st.session_state:
         res = st.session_state["snippet_result"]
         summary = res.get("summary", {})
         findings = res.get("findings", [])
         high_risk_funcs = res.get("high_risk_functions", [])
+
+        if st.session_state.get("snippet_llm_error", False) or any(
+            "llm_error" in f.get("extra", {}) for f in findings
+        ):
+            st.warning(GEMINI_BUSY_WARNING)
 
         st.markdown("---")
         st.subheader("📊 Snippet Review Summary")
@@ -394,7 +433,7 @@ with tab_snippet:
 
         st.markdown("<br>", unsafe_allow_html=True)
         st.subheader(f"Findings ({len(findings)})")
-        render_findings_grouped(findings)
+        render_findings_grouped(findings, is_demo=False)
 
 # ==============================================================================
 # TAB 2: Review a Pull Request
@@ -423,6 +462,7 @@ with tab_pr:
             demo_data = load_demo_pr()
             st.session_state["pr_result"] = demo_data
             st.session_state["pr_is_demo"] = True
+            st.session_state["pr_llm_error"] = False
             st.success("Loaded bundled fictional sample pull request: `octocat/demo-repo#42` (Sample Data, 100% offline).")
         except Exception as exc:
             st.error(f"Failed to load demo PR: {exc}")
@@ -438,8 +478,6 @@ with tab_pr:
                 elif st.session_state["gemini_call_count"] >= MAX_GEMINI_CALLS_PER_SESSION:
                     st.warning(f"⚠️ Session Gemini limit reached ({MAX_GEMINI_CALLS_PER_SESSION} calls). Reviewing with static and ML layers only.")
                     actual_use_llm = False
-                else:
-                    st.session_state["gemini_call_count"] += 1
 
             with st.spinner("Fetching pull request diff and analyzing changed lines..."):
                 try:
@@ -448,9 +486,30 @@ with tab_pr:
                         use_llm=actual_use_llm,
                         use_ml=use_ml,
                         token=effective_gh_token,
+                        on_llm_retry=on_gemini_retry,
                     )
                     st.session_state["pr_result"] = pr_result
                     st.session_state["pr_is_demo"] = False
+
+                    if actual_use_llm:
+                        has_llm_err = any(
+                            "llm_error" in f.get("extra", {})
+                            for file_res in pr_result.get("files", [])
+                            for f in file_res.get("findings", [])
+                        )
+                        if has_llm_err:
+                            st.session_state["pr_llm_error"] = True
+                        else:
+                            st.session_state["pr_llm_error"] = False
+                            successful_files = sum(
+                                1
+                                for file_res in pr_result.get("files", [])
+                                if file_res.get("findings")
+                                and not any("llm_error" in f.get("extra", {}) for f in file_res.get("findings", []))
+                            )
+                            st.session_state["gemini_call_count"] += successful_files
+                    else:
+                        st.session_state["pr_llm_error"] = False
                 except GitHubInvalidURLError as exc:
                     st.error(f"❌ Invalid URL: {exc}")
                 except GitHubPRNotFoundError as exc:
@@ -471,6 +530,16 @@ with tab_pr:
         skipped_files = pr_res.get("skipped_files", [])
         hidden_count = pr_res.get("pre_existing_hidden_count", 0)
         is_demo = st.session_state.get("pr_is_demo", False)
+
+        if not is_demo and (
+            st.session_state.get("pr_llm_error", False)
+            or any(
+                "llm_error" in f.get("extra", {})
+                for file_res in files_results
+                for f in file_res.get("findings", [])
+            )
+        ):
+            st.warning(GEMINI_BUSY_WARNING)
 
         st.markdown("---")
         if is_demo:
@@ -546,6 +615,6 @@ with tab_pr:
                 f"*(High: {f_summary.get('high', 0)}, Medium: {f_summary.get('medium', 0)}, Low: {f_summary.get('low', 0)})*"
             )
 
-            render_findings_grouped(f_findings)
+            render_findings_grouped(f_findings, is_demo=is_demo)
 
             st.markdown("<br>", unsafe_allow_html=True)

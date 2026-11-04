@@ -48,8 +48,9 @@
           "end_line": 12,
           "confidence": 0.95,
           "score": 4.75,
-          "explanation": "[pre-generated sample] Storing plaintext secrets or cryptographic keys directly in source code allows credential extraction through repository leaks, forks, or logs.",
-          "suggested_fix": "# Load cryptographic secret from environment variable\nimport os\nJWT_SECRET = os.environ.get('JWT_SECRET_KEY')\nif not JWT_SECRET:\n    raise RuntimeError('JWT_SECRET_KEY environment variable is required')"
+          "pre_generated": true,
+          "explanation": "[pre-generated sample] A cryptographic secret or authentication key is hardcoded directly in the source code. If committed to version control, it is exposed to unauthorized users and can be extracted from git history, leading to token forgery or unauthorized account access.",
+          "suggested_fix": "# Load secret key securely from an environment variable\nimport os\nJWT_SECRET = os.environ.get('JWT_SECRET_KEY')\nif not JWT_SECRET:\n    raise RuntimeError('JWT_SECRET_KEY environment variable is required')"
         },
         {
           "tool": "ast",
@@ -61,7 +62,8 @@
           "end_line": 26,
           "confidence": 0.9,
           "score": 2.7,
-          "explanation": "[pre-generated sample] A bare except block catches all exceptions unconditionally, including KeyboardInterrupt, SystemExit, and MemoryError, which prevents clean process termination and hides root causes.",
+          "pre_generated": true,
+          "explanation": "[pre-generated sample] A bare except clause catches BaseException, which includes KeyboardInterrupt, SystemExit, and MemoryError. This suppresses critical process termination signals, masks unanticipated runtime bugs, and prevents proper error diagnostics.",
           "suggested_fix": "except Exception as exc:\n    logger.error('Failed to authenticate token: %s', exc)\n    raise AuthenticationError('Invalid credentials') from exc"
         },
         {
@@ -74,8 +76,9 @@
           "end_line": 31,
           "confidence": 0.95,
           "score": 1.425,
-          "explanation": "[pre-generated sample] Python default parameter expressions are evaluated once at function definition time. Subsequent invocations that mutate roles will inadvertently corrupt state across distinct callers.",
-          "suggested_fix": "def create_user(username: str, roles: list[str] | None = None):\n    if roles is None:\n        roles = []"
+          "pre_generated": true,
+          "explanation": "[pre-generated sample] Python default parameter expressions are evaluated once when the function is defined, not on each call. If the default list is modified in-place, the mutations persist across subsequent invocations, corrupting state between unrelated calls.",
+          "suggested_fix": "def create_user(username: str, roles: list[str] | None = None):\n    if roles is None:\n        roles = []\n    return {'username': username, 'roles': roles}"
         }
       ]
     },
@@ -99,8 +102,9 @@
           "end_line": 19,
           "confidence": 0.95,
           "score": 4.9875,
-          "explanation": "[pre-generated sample] Constructing raw SQL strings with formatted user input bypasses database query parser sanitization, enabling malicious actors to manipulate queries, access unauthorized data, or drop tables.",
-          "suggested_fix": "# Use parameterized queries with bind variables\ncursor.execute('SELECT * FROM users WHERE id = %s', (user_id,))"
+          "pre_generated": true,
+          "explanation": "[pre-generated sample] Constructing SQL statements by formatting untrusted user input directly into query strings bypasses database parameter escaping. Attackers can inject SQL syntax to bypass authentication, read unauthorized database records, or drop tables.",
+          "suggested_fix": "# Use parameterized SQL queries with query placeholders\ncursor.execute('SELECT * FROM users WHERE id = %s', (user_id,))"
         },
         {
           "tool": "bandit",
@@ -112,8 +116,9 @@
           "end_line": 35,
           "confidence": 0.95,
           "score": 4.9875,
-          "explanation": "[pre-generated sample] Executing external processes through the system shell (shell=True) with interpolated paths permits arbitrary command injection if the path parameter contains shell metacharacters (; & | ` $).",
-          "suggested_fix": "# Execute directly without shell interpretation using argument list\nsubprocess.run(['tar', '-czf', 'backup.tar.gz', path], check=True)"
+          "pre_generated": true,
+          "explanation": "[pre-generated sample] Invoking subprocesses with shell=True delegates execution to the system command interpreter. If any argument includes shell metacharacters (such as ;, |, &, or $), an attacker can execute arbitrary shell commands with the application privileges.",
+          "suggested_fix": "# Execute executable directly without shell interpretation by passing an argument sequence\nsubprocess.run(['tar', '-czf', 'backup.tar.gz', path], check=True)"
         }
       ]
     }
