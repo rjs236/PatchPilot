@@ -1,9 +1,11 @@
 # ⚡ PatchPilot: AI-Powered Automated Code Review
 
 > **Neural Storm 2026 Hackathon** | **Track:** Future Tech | **Problem FT-05:** AI-Powered Automated Code Review  
-> [![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org/)
-> [![Tests Passing](https://img.shields.io/badge/tests-81%20passed-brightgreen.svg)](https://pytest.org/)
+> [![Python Version](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/)
+> [![Tests Passing](https://img.shields.io/badge/tests-82%20passed-brightgreen.svg)](https://pytest.org/)
 > [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+**Team:** rps (Rajasri A, Cheerla Praneetha, Madhira Sravanthi) · **Live demo:** https://patchpilot-v1.streamlit.app/ · **Demo video:** coming soon
 
 PatchPilot is a hybrid automated code review system for Python designed to detect subtle runtime bugs, security vulnerabilities, and architectural complexity before code is merged.
 
@@ -84,7 +86,7 @@ flowchart TD
 
 ## 🌐 Live Demo & Screenshots
 
-- **Live Deployment Link**: *[Hugging Face Space / Streamlit Community Cloud link placeholder]*
+- **Live Deployment Link**: *https://patchpilot-v1.streamlit.app/*
 
 ### Application Screenshots
 
@@ -100,7 +102,7 @@ flowchart TD
 
 ## 🛠️ Tech Stack & Libraries
 
-- **Language**: Python 3.10+ (Tested through Python 3.13)
+- **Language**: Python 3.10+ (Tested on Python 3.13)
 - **Static Analysis**: Python `ast`, `bandit` (v1.9.4), `ruff` (v0.17.3)
 - **Machine Learning**: `scikit-learn` (v1.9.1), `joblib` (v1.6.0), `numpy` (v2.5.4), `pandas` (v3.1.0)
 - **AI / LLM Integration**: Google Gemini via official `google-genai` SDK (v2.34.0)
@@ -114,7 +116,7 @@ flowchart TD
 ## 🚀 Quickstart & Running Locally
 
 ### 1. Prerequisites
-- Python 3.10 or higher (Python 3.11, 3.12, 3.13 supported)
+- Python 3.13 (tested); 3.10+ expected to work.
 - Git
 
 ### 2. Clone and Setup Environment
@@ -144,7 +146,7 @@ cp .env.example .env
 Configure your keys in `.env`:
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
-GEMINI_MODEL=gemini-2.5-flash
+GEMINI_MODEL=gemini-3.8-flash
 
 # Optional: Raises GitHub API rate limits from 60 req/hr to 5,000 req/hr
 # GITHUB_TOKEN=your_personal_access_token_here
@@ -186,11 +188,12 @@ curl -X GET "http://localhost:8000/review/pr/demo"
 
 ### 5. Running Automated Tests & Benchmark Smoke Test
 ```bash
-# Run unit test suite (81 tests, runs locally without network access)
+# Run unit test suite (82 tests, runs locally without network access)
 pytest -v
 
 # Run benchmark smoke test (stratified sample of 100 functions)
-python eval/benchmark.py --sample-size 100
+python eval/benchmark.py --split split_a --sample 100 --output smoke_results.json
+# The first run downloads PyCode-Vul from Hugging Face (internet required). Full run: --sample 0
 ```
 
 ---
@@ -200,7 +203,7 @@ python eval/benchmark.py --sample-size 100
 ### 1. Headline Honest Summary
 On the main benchmark, Bandit alone has higher F1 (0.768) than full PatchPilot (0.575) and higher recall; static PatchPilot reaches recall 0.905 but with a 49% false-positive rate caused mostly by maintainability rules; once the ML prior is applied with a validation-chosen threshold, full PatchPilot behaves much like the ML model alone.
 
-On production (non-test) Python functions from PyCode-Vul, PatchPilot's gradient-boosting risk model reaches ROC-AUC 0.82 [0.80-0.84] and F1 0.46 [0.41-0.51] on a cluster-isolated random split (N=2,236; 23% vulnerable; majority-class accuracy 76.9%), with recall of only 32% at the default threshold. On a held-out-repository split (N=1,052; 84 positives, mostly from two repositories) it reaches ROC-AUC 0.96 [0.94-0.98] and F1 0.73 [0.65-0.80]; this benchmark is small and imbalanced, so we treat it as supporting evidence only. Our audit found that 42% of the raw dataset were unit tests with a 74% vulnerable-label rate caused by fix-commit mining, and a trivial is_test baseline alone reached 0.70 AUC, so we removed tests, assertion counts and repository-identifying tokens from training. Labels remain noisy, and the model learns to separate vulnerable from patched code rather than to discover new vulnerabilities, so it is used only as a risk prior that re-ranks findings from Bandit, Ruff and custom AST checks.
+On production (non-test) Python functions from PyCode-Vul, PatchPilot's gradient-boosting risk model reaches ROC-AUC 0.82 [0.80-0.84] and F1 0.46 [0.41-0.51] (at the default 0.5 threshold; 0.57 at the validation-tuned threshold used in the table below) on a cluster-isolated random split (N=2,236; 23% vulnerable; majority-class accuracy 76.9%), with recall of only 32% at the default threshold. On a held-out-repository split (N=1,052; 84 positives, mostly from two repositories) it reaches ROC-AUC 0.96 [0.94-0.98] and F1 0.73 [0.65-0.80]; this benchmark is small and imbalanced, so we treat it as supporting evidence only. Our audit found that 42% of the raw dataset were unit tests with a 74% vulnerable-label rate caused by fix-commit mining, and a trivial is_test baseline alone reached 0.70 AUC, so we removed tests, assertion counts and repository-identifying tokens from training. Labels remain noisy, and the model learns to separate vulnerable from patched code rather than to discover new vulnerabilities, so it is used only as a risk prior that re-ranks findings from Bandit, Ruff and custom AST checks.
 
 ### 2. Primary Benchmark Table: Split A Non-Test ($N=2,236$; 516 Vulnerable, 23.1%)
 
@@ -287,7 +290,7 @@ PatchPilot/
 │   ├── results.md                # In-depth benchmark results & sensitivity
 │   ├── screenshots/              # UI demo screenshots & GIF
 │   └── SUBMISSION_CHECKLIST.md   # Pre-deadline verification checklist
-├── tests/                        # 81 automated unit & integration tests
+├── tests/                        # 82 automated unit & integration tests
 ├── .env.example                  # Environment configuration template
 ├── .gitignore                    # Comprehensive ignores (.env, datasets, caches)
 ├── LICENSE                       # MIT License
@@ -303,7 +306,7 @@ PatchPilot/
 2. **Commit-Mined ML Labels**: The ML risk classifier is trained on historical security fix commits and identifies patterns characteristic of pre-patch vs. post-patch code. It serves as an empirical risk prior to re-rank static findings, not as a standalone vulnerability oracle.
 3. **Privacy & Data Security**:
    - Code is analysed in temporary files that are deleted immediately and PatchPilot does not store it. If you enable LLM explanations, the code and findings are sent to Google's Gemini API, so do not use private code without permission.
-   - When LLM explanations are disabled, PatchPilot executes completely locally without external API queries.
+   - When LLM explanations are disabled, PatchPilot runs locally without external API calls, except fetching PR data from GitHub.
 4. **Human Review Required**: All AI-suggested code fixes must be inspected, tested, and reviewed by human engineers before merging into production repositories.
 
 ---
@@ -326,7 +329,7 @@ In accordance with Neural Storm 2026 hackathon guidelines, all AI assistance is 
 
 ## 📚 Dataset Attribution & License
 
-- **PyCode-Vul**: Mined from public open-source Git commits associated with published CVE fixes.
-  - Source: `S-AIR-L/PyCode-Vul` (Hugging Face Datasets)
-  - Dataset Licence: *licence: verify on the dataset card*
+- **PyCode-Vul**: function-level data mined from security-fix commits of open-source Python projects.
+  - Source: [`S-AIR-L/PyCode-Vul`](https://huggingface.co/datasets/S-AIR-L/PyCode-Vul) (Hugging Face Datasets), by the Security & AI Research Lab (S-AIR-L)
+  - Dataset Licence: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) (per the dataset card). PatchPilot's trained model and evaluation use this data; no dataset files are redistributed in this repository.
 - **Software License**: PatchPilot is released under the [MIT License](LICENSE).
