@@ -1,5 +1,8 @@
 """Streamlit UI for PatchPilot automated code review and GitHub pull request review."""
+import sys
+from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import os
 import streamlit as st
 
