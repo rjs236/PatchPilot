@@ -5,7 +5,7 @@
 > [![Tests Passing](https://img.shields.io/badge/tests-82%20passed-brightgreen.svg)](https://pytest.org/)
 > [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Team:** rps (Rajasri A, Cheerla Praneetha, Madhira Sravanthi) · **Live demo:** https://patchpilot-v1.streamlit.app/ · **Demo video:** coming soon
+**Team:** rps (Rajasri A, Cheerla Praneetha, Madhira Sravanthi) · **Live demo:** https://patchpilot-v1.streamlit.app/ 
 
 PatchPilot is a hybrid automated code review system for Python designed to detect subtle runtime bugs, security vulnerabilities, and architectural complexity before code is merged.
 
